@@ -6,6 +6,7 @@ import type { Attendance } from "../lib/types";
 import { Badge, Button, Card, PageHeader, Spinner } from "../components/ui";
 import { CaptureFlow, type Capture } from "../components/CaptureFlow";
 import { SelfieThumb } from "../components/SelfieThumb";
+import { AttendanceStatus } from "../components/badges";
 import { fmtDate, fmtDistance, fmtHours, fmtTime, hoursBetween, todayIn, uploadSelfie } from "../lib/utils";
 
 export function Punch() {
@@ -87,6 +88,7 @@ export function Punch() {
               <SelfieThumb path={row.check_in_selfie_path} size={56} />
               {row.check_out_selfie_path && <SelfieThumb path={row.check_out_selfie_path} size={56} />}
             </div>
+            <div className="mb-4 flex justify-center"><AttendanceStatus row={row} /></div>
             {openFromEarlier && <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">You did not check out on {fmtDate(row.work_date)}. Check out to close it.</p>}
             <dl className="mb-5 grid grid-cols-2 gap-3 text-left text-sm">
               <div className="rounded-lg bg-slate-50 p-3">

@@ -6,6 +6,7 @@ import type { AttendanceWithEmployee, Branch, EmployeeLite, VisitWithEmployee } 
 import { Badge, Card, Empty, PageHeader, Spinner } from "../components/ui";
 import { MapView, type MapPoint } from "../components/MapView";
 import { SelfieThumb } from "../components/SelfieThumb";
+import { AttendanceStatus } from "../components/badges";
 import { fmtDistance, fmtHours, fmtTime, hoursBetween, mapsLink, todayIn } from "../lib/utils";
 
 interface Data {
@@ -49,12 +50,11 @@ export function Dashboard() {
     if (!data) return [];
     return [
       ...data.branches.map((b) => ({ lat: b.latitude, lng: b.longitude, label: `Branch: ${b.name}`, color: "#64748b", radius: b.radius_m })),
-      ...data.attendance.map((a) => ({
-        lat: a.check_in_lat,
-        lng: a.check_in_lng,
-        label: `${a.employee?.full_name ?? "Employee"} · in ${fmtTime(a.check_in_at, tz)}`,
-        color: "#059669",
-      })),
+      ...data.attendance.flatMap((a) =>
+        a.check_in_lat == null || a.check_in_lng == null
+          ? []
+          : [{ lat: a.check_in_lat, lng: a.check_in_lng, label: `${a.employee?.full_name ?? "Employee"} · in ${fmtTime(a.check_in_at, tz)}`, color: "#059669" }],
+      ),
       ...data.visits.map((v) => ({
         lat: v.latitude,
         lng: v.longitude,
@@ -89,7 +89,7 @@ export function Dashboard() {
     { label: "Active staff", value: data.employees.length, cls: "text-slate-900" },
     { label: "Checked in", value: data.attendance.length, cls: "text-emerald-600" },
     { label: "Not checked in", value: absent.length, cls: "text-rose-600" },
-    { label: "Checked out", value: data.attendance.filter((a) => a.check_out_at).length, cls: "text-indigo-600" },
+    { label: "Late", value: data.attendance.filter((a) => a.late_minutes > 0).length, cls: "text-amber-600" },
     { label: "Field visits", value: data.visits.length, cls: "text-amber-600" },
   ];
 
@@ -139,7 +139,10 @@ export function Dashboard() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-2">{fmtTime(a.check_in_at, tz)}</td>
+                    <td className="px-4 py-2">
+                      <p>{fmtTime(a.check_in_at, tz)}</p>
+                      <AttendanceStatus row={a} />
+                    </td>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2">
                         {a.check_out_selfie_path && <SelfieThumb path={a.check_out_selfie_path} size={28} />}
@@ -149,16 +152,22 @@ export function Dashboard() {
                     <td className="px-4 py-2">{fmtHours(hoursBetween(a.check_in_at, a.check_out_at))}</td>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2">
-                        {a.check_in_in_geofence == null ? (
-                          <Badge>Field</Badge>
-                        ) : a.check_in_in_geofence ? (
-                          <Badge tone="green">In zone · {fmtDistance(a.check_in_distance_m)}</Badge>
+                        {a.check_in_lat == null || a.check_in_lng == null ? (
+                          <Badge>No location</Badge>
                         ) : (
-                          <Badge tone="amber">Outside · {fmtDistance(a.check_in_distance_m)}</Badge>
+                          <>
+                            {a.check_in_in_geofence == null ? (
+                              <Badge>Field</Badge>
+                            ) : a.check_in_in_geofence ? (
+                              <Badge tone="green">In zone · {fmtDistance(a.check_in_distance_m)}</Badge>
+                            ) : (
+                              <Badge tone="amber">Outside · {fmtDistance(a.check_in_distance_m)}</Badge>
+                            )}
+                            <a href={mapsLink(a.check_in_lat, a.check_in_lng)} target="_blank" rel="noreferrer" className="text-indigo-600" aria-label="Open in maps">
+                              <MapPin className="h-4 w-4" />
+                            </a>
+                          </>
                         )}
-                        <a href={mapsLink(a.check_in_lat, a.check_in_lng)} target="_blank" rel="noreferrer" className="text-indigo-600" aria-label="Open in maps">
-                          <MapPin className="h-4 w-4" />
-                        </a>
                       </div>
                     </td>
                   </tr>

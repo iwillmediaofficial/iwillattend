@@ -1,0 +1,120 @@
+import { useCallback, useEffect, useState } from "react";
+import { Check, X } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../auth/AuthContext";
+import type { CorrectionRequest, LeaveRequest } from "../lib/types";
+import { Button, Card, Empty, ErrorText, PageHeader, Spinner } from "../components/ui";
+import { RequestBadge } from "../components/badges";
+import { addDays, errMsg, fmtDate, fmtTime, todayIn } from "../lib/utils";
+
+const EMP = "employee:employees!employee_id(id, full_name, emp_code, staff_type)";
+
+export function Approvals() {
+  const { employee: me, org } = useAuth();
+  const tz = org!.timezone;
+  const [leaves, setLeaves] = useState<LeaveRequest[] | null>(null);
+  const [corrs, setCorrs] = useState<CorrectionRequest[]>([]);
+  const [busyId, setBusyId] = useState("");
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    const since = addDays(todayIn(tz), -45) + "T00:00:00Z";
+    const [l, c] = await Promise.all([
+      supabase.from("leave_requests").select(`*, leave_type:leave_types(name, is_paid), ${EMP}`).neq("status", "cancelled").gte("created_at", since).order("created_at", { ascending: false }),
+      supabase.from("correction_requests").select(`*, ${EMP}`).neq("status", "cancelled").gte("created_at", since).order("created_at", { ascending: false }),
+    ]);
+    if (l.error || c.error) setError((l.error ?? c.error)!.message);
+    setLeaves((l.data as unknown as LeaveRequest[]) ?? []);
+    setCorrs((c.data as unknown as CorrectionRequest[]) ?? []);
+  }, [tz]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const decide = async (kind: "leave" | "correction", id: string, approve: boolean) => {
+    let note = "";
+    if (!approve) {
+      const input = window.prompt("Reason for rejecting (optional):", "");
+      if (input === null) return;
+      note = input;
+    }
+    setBusyId(id);
+    setError("");
+    const { error } = await supabase.rpc(kind === "leave" ? "decide_leave" : "decide_correction", { p_id: id, p_approve: approve, p_note: note });
+    if (error) setError(errMsg(error));
+    setBusyId("");
+    await load();
+  };
+
+  if (!leaves) return <Spinner />;
+
+  const canDecide = (employeeId: string) => employeeId !== me!.id || me!.role === "owner";
+  const actions = (kind: "leave" | "correction", r: { id: string; status: string; employee_id: string }) =>
+    r.status !== "pending" ? (
+      <RequestBadge status={r.status as LeaveRequest["status"]} />
+    ) : canDecide(r.employee_id) ? (
+      <div className="flex gap-2">
+        <Button variant="success" loading={busyId === r.id} onClick={() => decide(kind, r.id, true)} aria-label="Approve"><Check className="h-4 w-4" /> Approve</Button>
+        <Button variant="outline" disabled={busyId === r.id} onClick={() => decide(kind, r.id, false)} aria-label="Reject"><X className="h-4 w-4" /> Reject</Button>
+      </div>
+    ) : (
+      <span className="text-xs text-slate-500">Needs another approver</span>
+    );
+
+  const pendingFirst = <T extends { status: string }>(xs: T[]) => [...xs.filter((x) => x.status === "pending"), ...xs.filter((x) => x.status !== "pending")];
+  const pendingCount = leaves.filter((x) => x.status === "pending").length + corrs.filter((x) => x.status === "pending").length;
+
+  return (
+    <>
+      <PageHeader title="Approvals" subtitle={`${pendingCount} pending · requests from the last 45 days`} />
+      <ErrorText>{error}</ErrorText>
+
+      <Card className="mb-5 mt-3">
+        <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">Leave requests</h2>
+        {leaves.length === 0 ? (
+          <Empty>No leave requests.</Empty>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {pendingFirst(leaves).map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <div className="min-w-48 flex-1">
+                  <p className="text-sm font-medium">{r.employee?.full_name} · {r.leave_type?.name}</p>
+                  <p className="text-xs text-slate-500">
+                    {fmtDate(r.from_date)}{r.to_date !== r.from_date ? ` to ${fmtDate(r.to_date)}` : ""} · {Number(r.days)} day{Number(r.days) === 1 ? "" : "s"}{r.half_day ? " (half day)" : ""}
+                  </p>
+                  {r.reason && <p className="mt-0.5 text-xs text-slate-600">{r.reason}</p>}
+                </div>
+                {actions("leave", r)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">Attendance corrections</h2>
+        {corrs.length === 0 ? (
+          <Empty>No correction requests.</Empty>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {pendingFirst(corrs).map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <div className="min-w-48 flex-1">
+                  <p className="text-sm font-medium">{r.employee?.full_name} · {fmtDate(r.work_date)}</p>
+                  <p className="text-xs text-slate-500">
+                    {r.requested_check_in ? `Check-in ${fmtTime(r.requested_check_in, tz)}` : ""}
+                    {r.requested_check_in && r.requested_check_out ? " · " : ""}
+                    {r.requested_check_out ? `Check-out ${fmtTime(r.requested_check_out, tz)}` : ""}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-600">{r.reason}</p>
+                </div>
+                {actions("correction", r)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </>
+  );
+}

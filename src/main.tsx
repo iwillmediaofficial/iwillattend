@@ -14,6 +14,10 @@ import { Dashboard } from "./pages/Dashboard";
 import { Employees } from "./pages/Employees";
 import { Branches } from "./pages/Branches";
 import { Reports } from "./pages/Reports";
+import { Leave } from "./pages/Leave";
+import { Approvals } from "./pages/Approvals";
+import { Muster } from "./pages/Muster";
+import { Settings } from "./pages/Settings";
 
 function Guard({ allow, children }: { allow: boolean; children: ReactNode }) {
   return allow ? <>{children}</> : <Navigate to="/punch" replace />;
@@ -40,6 +44,10 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/punch" element={<Punch />} />
         <Route path="/history" element={<History />} />
+        <Route path="/leave" element={<Leave />} />
+        <Route path="/approvals" element={<Guard allow={isManager}><Approvals /></Guard>} />
+        <Route path="/muster" element={<Guard allow={isManager}><Muster /></Guard>} />
+        <Route path="/settings" element={<Guard allow={isAdmin}><Settings /></Guard>} />
         <Route path="/visits" element={<Guard allow={employee.staff_type === "field"}><Visits /></Guard>} />
         <Route path="/dashboard" element={<Guard allow={isManager}><Dashboard /></Guard>} />
         <Route path="/reports" element={<Guard allow={isManager}><Reports /></Guard>} />

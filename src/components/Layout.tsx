@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Building2, CalendarClock, FileBarChart, Fingerprint, LayoutDashboard, LogOut, MapPinned, Users } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCheck, FileBarChart, Fingerprint, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 
 export function Layout() {
@@ -9,10 +9,14 @@ export function Layout() {
     { to: "/punch", label: "Attendance", icon: Fingerprint, show: true },
     { to: "/visits", label: "Visits", icon: MapPinned, show: employee?.staff_type === "field" },
     { to: "/history", label: "History", icon: CalendarClock, show: true },
+    { to: "/leave", label: "Leave", icon: Palmtree, show: true },
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: isManager },
+    { to: "/approvals", label: "Approvals", icon: ClipboardCheck, show: isManager },
+    { to: "/muster", label: "Monthly sheet", icon: Table2, show: isManager },
     { to: "/reports", label: "Reports", icon: FileBarChart, show: isManager },
     { to: "/employees", label: "Employees", icon: Users, show: isAdmin },
     { to: "/branches", label: "Branches", icon: Building2, show: isAdmin },
+    { to: "/settings", label: "Settings", icon: SettingsIcon, show: isAdmin },
   ].filter((i) => i.show);
 
   return (
@@ -69,7 +73,7 @@ export function Layout() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex min-w-[4.5rem] flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px] font-medium ${isActive ? "text-indigo-600" : "text-slate-500"}`
+              `flex min-w-[4.5rem] flex-1 shrink-0 whitespace-nowrap flex-col items-center gap-0.5 px-1 py-2 text-[11px] font-medium ${isActive ? "text-indigo-600" : "text-slate-500"}`
             }
           >
             <Icon className="h-5 w-5" /> {label}

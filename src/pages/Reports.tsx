@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import type { AttendanceWithEmployee, EmployeeLite } from "../lib/types";
 import { Button, Card, Empty, PageHeader, Spinner } from "../components/ui";
 import { SelfieThumb } from "../components/SelfieThumb";
+import { AttendanceStatus } from "../components/badges";
 import { downloadCsv, fmtDate, fmtDistance, fmtHours, fmtTime, hoursBetween, todayIn } from "../lib/utils";
 
 const inputCls = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
@@ -61,7 +62,7 @@ export function Reports() {
   const exportCsv = () => {
     if (!rows) return;
     downloadCsv(`attendance_${from}_to_${to}.csv`, [
-      ["Date", "Employee", "Code", "Staff type", "Check in", "Check out", "Hours", "In geofence", "Distance from branch (m)", "Check-in latitude", "Check-in longitude"],
+      ["Date", "Employee", "Code", "Staff type", "Status", "Late minutes", "Corrected", "Check in", "Check out", "Hours", "In geofence", "Distance from branch (m)", "Check-in latitude", "Check-in longitude"],
       ...rows.map((r) => {
         const h = hoursBetween(r.check_in_at, r.check_out_at);
         return [
@@ -69,6 +70,9 @@ export function Reports() {
           r.employee?.full_name,
           r.employee?.emp_code,
           r.employee?.staff_type,
+          r.status === "half_day" ? "Half day" : r.status === "late" ? "Late" : "Present",
+          r.late_minutes,
+          r.is_corrected ? "Yes" : "No",
           fmtTime(r.check_in_at, tz),
           r.check_out_at ? fmtTime(r.check_out_at, tz) : "",
           h == null ? "" : h.toFixed(2),
@@ -160,6 +164,7 @@ export function Reports() {
                     <th className="px-4 py-2 font-medium">In</th>
                     <th className="px-4 py-2 font-medium">Out</th>
                     <th className="px-4 py-2 font-medium">Hours</th>
+                    <th className="px-4 py-2 font-medium">Status</th>
                     <th className="px-4 py-2 font-medium">From branch</th>
                   </tr>
                 </thead>
@@ -176,6 +181,7 @@ export function Reports() {
                       <td className="px-4 py-2">{fmtTime(r.check_in_at, tz)}</td>
                       <td className="px-4 py-2">{fmtTime(r.check_out_at, tz)}</td>
                       <td className="px-4 py-2">{fmtHours(hoursBetween(r.check_in_at, r.check_out_at))}</td>
+                      <td className="px-4 py-2"><AttendanceStatus row={r} /></td>
                       <td className="px-4 py-2">{fmtDistance(r.check_in_distance_m)}</td>
                     </tr>
                   ))}

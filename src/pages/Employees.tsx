@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { KeyRound, Pencil, Plus } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
-import type { Branch, Employee, Role, StaffType } from "../lib/types";
+import type { Branch, Employee, Role, Shift, StaffType } from "../lib/types";
 import { Badge, Button, Card, Empty, ErrorText, Input, Modal, PageHeader, Select, Spinner } from "../components/ui";
 import { errMsg } from "../lib/utils";
 
@@ -18,12 +18,14 @@ interface Form {
   role: Role;
   staff_type: StaffType;
   branch_id: string;
+  shift_id: string;
+  joined_on: string;
   is_active: boolean;
 }
 
 const blank: Form = {
   full_name: "", email: "", password: "", emp_code: "", phone: "", designation: "", department: "",
-  role: "employee", staff_type: "office", branch_id: "", is_active: true,
+  role: "employee", staff_type: "office", branch_id: "", shift_id: "", joined_on: "", is_active: true,
 };
 
 /** Calls the manage-employee function and surfaces its error message. */
@@ -46,6 +48,7 @@ export function Employees() {
   const { employee: me } = useAuth();
   const [rows, setRows] = useState<Employee[] | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [shifts, setShifts] = useState<Shift[]>([]);
   const [form, setForm] = useState<Form | null>(null);
   const [reset, setReset] = useState<Employee | null>(null);
   const [newPass, setNewPass] = useState("");
@@ -53,10 +56,12 @@ export function Employees() {
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    const [e, b] = await Promise.all([
+    const [e, b, s] = await Promise.all([
       supabase.from("employees").select("*").order("full_name"),
       supabase.from("branches").select("*").eq("is_active", true).order("name"),
+      supabase.from("shifts").select("*").eq("is_active", true).order("name"),
     ]);
+    setShifts((s.data as Shift[]) ?? []);
     setRows((e.data as Employee[]) ?? []);
     setBranches((b.data as Branch[]) ?? []);
   }, []);
@@ -87,14 +92,18 @@ export function Employees() {
         staff_type: form.staff_type,
         branch_id: form.branch_id || null,
       };
+      const extra: Record<string, unknown> = { shift_id: form.shift_id || null };
+      if (form.joined_on) extra.joined_on = form.joined_on;
       if (form.id) {
         const isOwnerRow = form.role === "owner";
-        const patch: Record<string, unknown> = { ...common, is_active: form.is_active };
+        const patch: Record<string, unknown> = { ...common, ...extra, is_active: form.is_active };
         if (canAssignRoles && !isOwnerRow && form.id !== me!.id) patch.role = form.role;
         const { error } = await supabase.from("employees").update(patch).eq("id", form.id);
         if (error) throw error;
       } else {
-        await callManage({ action: "create", ...common, email: form.email.trim(), password: form.password, role: form.role });
+        const res = await callManage({ action: "create", ...common, email: form.email.trim(), password: form.password, role: form.role });
+        const { error } = await supabase.from("employees").update(extra).eq("id", res.employee.id);
+        if (error) throw error;
       }
       setForm(null);
       await load();
@@ -124,7 +133,7 @@ export function Employees() {
     setForm({
       id: r.id, full_name: r.full_name, email: r.email, password: "", emp_code: r.emp_code ?? "", phone: r.phone ?? "",
       designation: r.designation ?? "", department: r.department ?? "", role: r.role, staff_type: r.staff_type,
-      branch_id: r.branch_id ?? "", is_active: r.is_active,
+      branch_id: r.branch_id ?? "", shift_id: r.shift_id ?? "", joined_on: r.joined_on, is_active: r.is_active,
     });
   };
 
@@ -230,6 +239,17 @@ export function Employees() {
                 </option>
               ))}
             </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <Select label="Shift" value={form.shift_id} onChange={(e) => set("shift_id", e.target.value)}>
+                <option value="">Company default</option>
+                {shifts.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.start_time.slice(0, 5)})
+                  </option>
+                ))}
+              </Select>
+              <Input label="Joining date" type="date" value={form.joined_on} hint={form.id ? undefined : "Blank means today."} onChange={(e) => set("joined_on", e.target.value)} />
+            </div>
             {form.id && form.id !== me!.id && form.role !== "owner" && (
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} /> Active (can sign in and mark attendance)
