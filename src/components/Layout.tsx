@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Building2, CalendarClock, ClipboardCheck, FileBarChart, Fingerprint, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCheck, FileBarChart, Fingerprint, IndianRupee, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 
 export function Layout() {
@@ -10,10 +10,12 @@ export function Layout() {
     { to: "/visits", label: "Visits", icon: MapPinned, show: employee?.staff_type === "field" },
     { to: "/history", label: "History", icon: CalendarClock, show: true },
     { to: "/leave", label: "Leave", icon: Palmtree, show: true },
+    { to: "/payslips", label: "Payslips", icon: ReceiptText, show: true },
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: isManager },
     { to: "/approvals", label: "Approvals", icon: ClipboardCheck, show: isManager },
     { to: "/muster", label: "Monthly sheet", icon: Table2, show: isManager },
     { to: "/reports", label: "Reports", icon: FileBarChart, show: isManager },
+    { to: "/payroll", label: "Payroll", icon: IndianRupee, show: isAdmin },
     { to: "/employees", label: "Employees", icon: Users, show: isAdmin },
     { to: "/branches", label: "Branches", icon: Building2, show: isAdmin },
     { to: "/settings", label: "Settings", icon: SettingsIcon, show: isAdmin },
