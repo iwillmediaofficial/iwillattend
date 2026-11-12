@@ -9,7 +9,7 @@ import {
   type PayrollRun, type PayrollSettings, type Payslip, type SalaryStructure,
 } from "../lib/payroll";
 import { downloadCsv, errMsg, todayIn } from "../lib/utils";
-import { monthDates } from "../lib/muster";
+import { monthDates, type MusterEmployee } from "../lib/muster";
 
 interface Emp { id: string; full_name: string; emp_code: string | null; joined_on: string; exit_on: string | null; designation: string | null; department: string | null }
 type Tab = "run" | "salaries" | "rules";
@@ -98,12 +98,42 @@ export function Payroll() {
   });
 
   const setLocked = (locked: boolean) => guard(async () => {
-    const msg = locked
-      ? `Finalise payroll for ${monthLabel(month)}? Employees will see their payslips and the figures can no longer be changed.`
-      : `Reopen payroll for ${monthLabel(month)}? Payslips will be hidden from employees until you finalise again.`;
-    if (!window.confirm(msg)) return;
-    const { error } = await supabase.from("payroll_runs").update({ status: locked ? "locked" : "draft", locked_at: locked ? new Date().toISOString() : null }).eq("id", run!.id);
-    if (error) throw error;
+    const monthDate = `${month}-01`;
+    const last = monthDates(month).at(-1)!;
+
+    if (!locked) {
+      if (!window.confirm(`Reopen payroll for ${monthLabel(month)}? Payslips will be hidden from employees until you finalise again.`)) return;
+      const { error } = await supabase.from("payroll_runs").update({ status: "draft", locked_at: null }).eq("id", run!.id);
+      if (error) throw error;
+      await supabase.from("muster_snapshots").delete().eq("month", monthDate);
+      await loadRun();
+      return;
+    }
+
+    if (slips.some((p) => num(p.net_pay) < 0)) throw new Error("One or more payslips have a negative net pay (shown in red). Adjust them before finalising.");
+    const [pl, pc] = await Promise.all([
+      supabase.from("leave_requests").select("id", { count: "exact", head: true }).eq("status", "pending").lte("from_date", last).gte("to_date", monthDate),
+      supabase.from("correction_requests").select("id", { count: "exact", head: true }).eq("status", "pending").gte("work_date", monthDate).lte("work_date", last),
+    ]);
+    const pending = (pl.count ?? 0) + (pc.count ?? 0);
+    const warn = pending > 0 ? `${pending} leave or correction request(s) for this month are still pending. Once you finalise, they cannot be approved unless payroll is reopened.\n\n` : "";
+    if (!window.confirm(`${warn}Finalise payroll for ${monthLabel(month)}? Employees will see their payslips and the figures can no longer be changed.`)) return;
+
+    // Freeze the month's attendance sheet, so later rule changes cannot rewrite it.
+    const staff = await supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on")
+      .or(`is_active.eq.true,exit_on.gte.${monthDate}`).lte("joined_on", last).order("full_name");
+    if (staff.error) throw staff.error;
+    const sheet = await loadMuster(month, today, org!, (staff.data as MusterEmployee[]) ?? []);
+    await supabase.from("muster_snapshots").delete().eq("month", monthDate);
+    const snap = await supabase.from("muster_snapshots").insert(
+      sheet.map((r) => ({ org_id: org!.id, month: monthDate, employee_id: r.employee.id, full_name: r.employee.full_name, emp_code: r.employee.emp_code, days: r.days, counts: r.counts, unpaid_off: r.unpaidOff, payable: r.payable })),
+    );
+    if (snap.error) throw snap.error;
+    const { error } = await supabase.from("payroll_runs").update({ status: "locked", locked_at: new Date().toISOString() }).eq("id", run!.id);
+    if (error) {
+      await supabase.from("muster_snapshots").delete().eq("month", monthDate);
+      throw error;
+    }
     await loadRun();
   });
 
@@ -116,7 +146,7 @@ export function Payroll() {
       const bonus = Math.max(0, num(adjust.bonus));
       const other = Math.max(0, num(adjust.other));
       const s = adjust.slip;
-      const t = totals({ basic: num(s.basic), hra: num(s.hra), allowances: num(s.allowances) }, bonus, other, st, settings!);
+      const t = totals({ basic: num(s.basic), hra: num(s.hra), allowances: num(s.allowances) }, bonus, other, st, settings!, num(s.tds));
       const { error } = await supabase.from("payslips").update({ bonus, other_deduction: other, ...t }).eq("id", s.id);
       if (error) throw error;
       setAdjust(null);
@@ -277,10 +307,10 @@ export function Payroll() {
                           <td className="px-3 py-2 text-right">{inr(s.pt)}</td>
                           <td className="px-3 py-2 text-right">{inr(s.tds)}</td>
                           <td className="px-3 py-2 text-right">{inr(s.other_deduction)}</td>
-                          <td className="px-3 py-2 text-right font-semibold">{inr(s.net_pay)}</td>
+                          <td className={`px-3 py-2 text-right font-semibold ${num(s.net_pay) < 0 ? "text-rose-600" : ""}`}>{inr(s.net_pay)}</td>
                           <td className="whitespace-nowrap px-3 py-2 text-right">
                             <Button variant="ghost" aria-label={`View payslip for ${s.employee?.full_name}`} onClick={() => setView(s)}><Eye className="h-4 w-4" /></Button>
-                            {!locked && (
+                            {!locked && !(me!.role === "hr" && s.employee_id === me!.id) && (
                               <Button variant="ghost" aria-label={`Adjust pay for ${s.employee?.full_name}`} onClick={() => { setError(""); setAdjust({ slip: s, bonus: String(num(s.bonus)), other: String(num(s.other_deduction)) }); }}><Pencil className="h-4 w-4" /></Button>
                             )}
                           </td>

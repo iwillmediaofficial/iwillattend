@@ -28,8 +28,14 @@ export function RequestBadge({ status }: { status: RequestStatus }) {
 }
 
 /** Result of comparing a punch selfie with the registered face. */
-export function FaceBadge({ match }: { match: boolean | null | undefined }) {
+export function FaceBadge({ match, required }: { match: boolean | null | undefined; required?: boolean }) {
   if (match === true) return <Badge tone="green">Face matched</Badge>;
   if (match === false) return <Badge tone="red">Face mismatch</Badge>;
-  return <Badge>Face not checked</Badge>;
+  // A registered employee whose selfie was never compared is suspicious, not neutral.
+  return required ? <Badge tone="amber">Face not checked</Badge> : null;
+}
+
+/** True when a punch needs a manager's eye: the face did not match, or was never compared. */
+export function faceFlagged(match: boolean | null | undefined, required: boolean): boolean {
+  return match === false || (match == null && required);
 }

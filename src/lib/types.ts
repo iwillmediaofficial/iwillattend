@@ -12,6 +12,8 @@ export interface Organization {
   missing_checkout_as: "half_day" | "full_day" | "absent";
   /** Weekly offs and holidays between unpaid absences are not paid. */
   sandwich_rule: boolean;
+  /** Office check-in is refused when the phone's location is less accurate than this many metres. */
+  max_accuracy_m: number;
 }
 
 export interface Shift {
@@ -133,6 +135,8 @@ export interface Attendance {
   /** null = the selfie was not compared (not enrolled, face check off, or model failed to load). */
   check_in_face_match: boolean | null;
   check_out_face_match: boolean | null;
+  /** The employee had a registered face at this punch, so an unchecked face is a flag. */
+  face_required: boolean;
 }
 
 export interface Visit {
@@ -147,6 +151,7 @@ export interface Visit {
   client_name: string;
   notes: string | null;
   face_match: boolean | null;
+  face_required: boolean;
 }
 
 export type EmployeeLite = Pick<Employee, "id" | "full_name" | "emp_code" | "staff_type">;

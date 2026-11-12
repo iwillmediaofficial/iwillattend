@@ -211,6 +211,11 @@ export function Settings() {
           <input type="checkbox" className="mt-0.5" checked={org!.sandwich_rule} disabled={!canEditOrg} onChange={(e) => setOrgRule({ sandwich_rule: e.target.checked })} />
           <span>Sandwich rule: do not pay a weekly off or holiday when the employee was absent on the working day before and after it, or had no paid working day in the month</span>
         </label>
+        <Select label="Office check-in needs a location accurate to" value={String(org!.max_accuracy_m)} disabled={!canEditOrg} onChange={(e) => setOrgRule({ max_accuracy_m: Number(e.target.value) })} hint="A less accurate reading is refused for office staff and flagged for field staff. Phones are usually within 5 to 60 m; a desktop PC is often far worse.">
+          {[30, 50, 100, 200, 500, 1000, 5000].map((m) => (
+            <option key={m} value={m}>{m >= 1000 ? `${m / 1000} km` : `${m} m`} or better{m === 5000 ? " (effectively off)" : ""}</option>
+          ))}
+        </Select>
       </Card>
 
       <Card className="mb-5 p-4">

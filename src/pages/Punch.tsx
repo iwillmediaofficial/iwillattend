@@ -117,7 +117,7 @@ export function Punch() {
             </div>
             <div className="mb-4 flex flex-wrap justify-center gap-1">
               <AttendanceStatus row={row} />
-              {faceOn && <FaceBadge match={row.check_in_face_match} />}
+              {faceOn && <FaceBadge match={row.check_in_face_match} required={row.face_required} />}
             </div>
             {openFromEarlier && <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">You did not check out on {fmtDate(row.work_date)}. Check out to close it.</p>}
             <dl className="mb-5 grid grid-cols-2 gap-3 text-left text-sm">

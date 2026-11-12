@@ -95,6 +95,8 @@ export function totals(
   otherDeduction: number,
   st: SalaryStructure,
   s: PayrollSettings,
+  /** TDS for this month, already scaled to the days paid. */
+  tds: number,
 ) {
   const gross = r2(earned.basic + earned.hra + earned.allowances + bonus);
   let pf_employee = 0, pf_employer = 0, esi_employee = 0, esi_employer = 0;
@@ -109,7 +111,6 @@ export function totals(
     esi_employer = Math.ceil((gross * n(s.esi_employer_pct)) / 100);
   }
   const pt = s.pt_enabled && gross >= n(s.pt_min_gross) && gross > 0 ? n(s.pt_amount) : 0;
-  const tds = gross > 0 ? n(st.tds_monthly) : 0;
   const total_deductions = r2(pf_employee + esi_employee + pt + tds + otherDeduction);
   return { gross, pf_employee, pf_employer, esi_employee, esi_employer, pt, tds, total_deductions, net_pay: r2(gross - total_deductions) };
 }
@@ -148,7 +149,7 @@ export function computeSlip(st: SalaryStructure, s: PayrollSettings, row: Muster
     ...earned,
     bonus,
     other_deduction: otherDeduction,
-    ...totals(earned, bonus, otherDeduction, st, s),
+    ...totals(earned, bonus, otherDeduction, st, s, Math.round(n(st.tds_monthly) * factor)),
   };
 }
 

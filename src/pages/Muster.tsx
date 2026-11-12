@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 import type { Holiday, LeaveRequest } from "../lib/types";
 import { Button, Card, Empty, PageHeader, Spinner } from "../components/ui";
-import { COUNT_CODES, DAY_CODES, buildMuster, monthDates, type MusterAttendance, type MusterEmployee } from "../lib/muster";
+import { COUNT_CODES, DAY_CODES, buildMuster, monthDates, type MusterAttendance, type MusterEmployee, type MusterRow } from "../lib/muster";
 import { downloadCsv, fetchAll, todayIn } from "../lib/utils";
 
 interface Data {
@@ -22,6 +22,8 @@ export function Muster() {
   const today = todayIn(org!.timezone);
   const [month, setMonth] = useState(today.slice(0, 7));
   const [data, setData] = useState<Data | null>(null);
+  // Saved copy of the sheet from when the month's payroll was finalised.
+  const [frozen, setFrozen] = useState<MusterRow[] | null>(null);
 
   const dates = useMemo(() => monthDates(month), [month]);
 
@@ -50,10 +52,34 @@ export function Muster() {
     };
   }, [dates]);
 
-  const rows = useMemo(
+  useEffect(() => {
+    let alive = true;
+    setFrozen(null);
+    void (async () => {
+      const { data: run } = await supabase.from("payroll_runs").select("status").eq("month", `${month}-01`).maybeSingle();
+      if (run?.status !== "locked") return;
+      const { data: snaps } = await supabase.from("muster_snapshots").select("*").eq("month", `${month}-01`).order("full_name");
+      if (!alive || !snaps?.length) return;
+      setFrozen(
+        snaps.map((r) => ({
+          employee: { id: r.employee_id, full_name: r.full_name, emp_code: r.emp_code, joined_on: "", exit_on: null },
+          days: r.days,
+          counts: r.counts,
+          unpaidOff: Number(r.unpaid_off),
+          payable: Number(r.payable),
+        })),
+      );
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [month]);
+
+  const live = useMemo(
     () => (data ? buildMuster(month, today, org!, data.employees, data.attendance, data.leaves, data.holidays) : []),
     [data, month, today, org],
   );
+  const rows = frozen ?? live;
 
   const exportCsv = () =>
     downloadCsv(`attendance_sheet_${month}.csv`, [
@@ -75,6 +101,10 @@ export function Muster() {
           </div>
         }
       />
+
+      {frozen && (
+        <p className="mb-3 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-800">Payroll for this month is finalised. This is the sheet as it was saved at that time; later rule changes do not alter it.</p>
+      )}
 
       <div className="mb-3 flex flex-wrap gap-2 text-xs">
         {DAY_CODES.map((c) => (

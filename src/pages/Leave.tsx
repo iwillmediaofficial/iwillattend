@@ -52,8 +52,9 @@ export function Leave() {
   };
 
   const cancel = async (r: LeaveRequest) => {
-    if (!window.confirm("Cancel this leave request?")) return;
-    await supabase.rpc("cancel_request", { p_kind: "leave", p_id: r.id });
+    if (!window.confirm(r.status === "approved" ? "Cancel this approved leave? The days go back to your balance." : "Cancel this leave request?")) return;
+    const { error } = await supabase.rpc("cancel_leave", { p_id: r.id });
+    if (error) window.alert(error.message);
     await load();
   };
 
@@ -111,7 +112,7 @@ export function Leave() {
                   {r.decision_note && <p className="mt-0.5 text-xs text-slate-600">Manager note: {r.decision_note}</p>}
                 </div>
                 <RequestBadge status={r.status} />
-                {r.status === "pending" && <Button variant="ghost" onClick={() => cancel(r)}>Cancel</Button>}
+                {(r.status === "pending" || (r.status === "approved" && r.from_date > today)) && <Button variant="ghost" onClick={() => cancel(r)}>Cancel</Button>}
               </li>
             ))}
           </ul>

@@ -47,6 +47,17 @@ export function Approvals() {
     await load();
   };
 
+  const revoke = async (id: string) => {
+    const note = window.prompt("Revoke this approved leave? The days go back to the employee's balance.\n\nReason (optional):", "");
+    if (note === null) return;
+    setBusyId(id);
+    setError("");
+    const { error } = await supabase.rpc("revoke_leave", { p_id: id, p_note: note });
+    if (error) setError(errMsg(error));
+    setBusyId("");
+    await load();
+  };
+
   if (!leaves) return <Spinner />;
 
   const canDecide = (employeeId: string) => employeeId !== me!.id || me!.role === "owner";
@@ -86,6 +97,9 @@ export function Approvals() {
                   {r.reason && <p className="mt-0.5 text-xs text-slate-600">{r.reason}</p>}
                 </div>
                 {actions("leave", r)}
+                {r.status === "approved" && canDecide(r.employee_id) && (
+                  <Button variant="ghost" disabled={busyId === r.id} onClick={() => revoke(r.id)}>Revoke</Button>
+                )}
               </li>
             ))}
           </ul>

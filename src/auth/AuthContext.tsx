@@ -47,7 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const { data } = await supabase
       .from("employees")
-      .select("*, org:organizations(*), branch:branches(*)")
+      // Name the linking column: other tables also connect employees to organisations,
+      // and without this the API refuses the query as ambiguous.
+      .select("*, org:organizations!org_id(*), branch:branches!branch_id(*)")
       .eq("user_id", uid)
       .eq("is_active", true)
       .maybeSingle();

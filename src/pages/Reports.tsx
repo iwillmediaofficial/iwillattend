@@ -8,7 +8,7 @@ import { SelfieThumb } from "../components/SelfieThumb";
 import { AttendanceStatus, FaceBadge } from "../components/badges";
 import { downloadCsv, fetchAll, fmtDate, fmtDistance, fmtHours, fmtTime, hoursBetween, todayIn } from "../lib/utils";
 
-const faceText = (m: boolean | null) => (m === true ? "Matched" : m === false ? "MISMATCH" : "Not checked");
+const faceText = (m: boolean | null, required: boolean) => (m === true ? "Matched" : m === false ? "MISMATCH" : required ? "NOT CHECKED" : "");
 
 const inputCls = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 
@@ -78,8 +78,8 @@ export function Reports() {
           r.status === "half_day" ? "Half day" : r.status === "late" ? "Late" : "Present",
           r.late_minutes,
           r.is_corrected ? "Yes" : "No",
-          faceText(r.check_in_face_match),
-          r.check_out_at ? faceText(r.check_out_face_match) : "",
+          faceText(r.check_in_face_match, r.face_required),
+          r.check_out_at ? faceText(r.check_out_face_match, r.face_required) : "",
           fmtTime(r.check_in_at, tz),
           r.check_out_at ? fmtTime(r.check_out_at, tz) : "",
           h == null ? "" : h.toFixed(2),
@@ -188,7 +188,7 @@ export function Reports() {
                       <td className="px-4 py-2">{fmtTime(r.check_in_at, tz)}</td>
                       <td className="px-4 py-2">{fmtTime(r.check_out_at, tz)}</td>
                       <td className="px-4 py-2">{fmtHours(hoursBetween(r.check_in_at, r.check_out_at))}</td>
-                      <td className="px-4 py-2"><span className="inline-flex flex-wrap gap-1"><AttendanceStatus row={r} />{(r.check_in_face_match === false || r.check_out_face_match === false) && <FaceBadge match={false} />}</span></td>
+                      <td className="px-4 py-2"><span className="inline-flex flex-wrap gap-1"><AttendanceStatus row={r} />{r.check_in_face_match === false || r.check_out_face_match === false ? <FaceBadge match={false} /> : r.face_required && (r.check_in_face_match == null || (r.check_out_at && r.check_out_face_match == null)) ? <FaceBadge match={null} required /> : null}</span></td>
                       <td className="px-4 py-2">{fmtDistance(r.check_in_distance_m)}</td>
                     </tr>
                   ))}

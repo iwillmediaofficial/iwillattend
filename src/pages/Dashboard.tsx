@@ -6,7 +6,7 @@ import type { AttendanceWithEmployee, Branch, EmployeeLite, VisitWithEmployee } 
 import { Badge, Card, Empty, PageHeader, Spinner } from "../components/ui";
 import { MapView, type MapPoint } from "../components/MapView";
 import { SelfieThumb } from "../components/SelfieThumb";
-import { AttendanceStatus, FaceBadge } from "../components/badges";
+import { AttendanceStatus, FaceBadge, faceFlagged } from "../components/badges";
 import { fmtDistance, fmtHours, fmtTime, hoursBetween, mapsLink, todayIn } from "../lib/utils";
 
 interface Data {
@@ -87,9 +87,9 @@ export function Dashboard() {
   const presentIds = new Set(data.attendance.map((a) => a.employee_id));
   const absent = data.employees.filter((e) => !presentIds.has(e.id));
   const mismatches =
-    data.attendance.filter((a) => a.check_in_face_match === false).length +
-    data.attendance.filter((a) => a.check_out_face_match === false).length +
-    data.visits.filter((v) => v.face_match === false).length;
+    data.attendance.filter((a) => faceFlagged(a.check_in_face_match, a.face_required)).length +
+    data.attendance.filter((a) => a.check_out_at && faceFlagged(a.check_out_face_match, a.face_required)).length +
+    data.visits.filter((v) => faceFlagged(v.face_match, v.face_required)).length;
   const stats = [
     { label: "Active staff", value: data.employees.length, cls: "text-slate-900" },
     { label: "Checked in", value: data.attendance.length, cls: "text-emerald-600" },
@@ -113,7 +113,7 @@ export function Dashboard() {
 
       {faceOn && mismatches > 0 && (
         <p className="mb-5 rounded-lg bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-          {mismatches} punch{mismatches === 1 ? "" : "es"} on this day did not match the registered face. Check the selfies below.
+          {mismatches} punch{mismatches === 1 ? "" : "es"} on this day did not match the registered face, or were not checked against it. Check the selfies below.
         </p>
       )}
 
@@ -154,14 +154,14 @@ export function Dashboard() {
                       <p>{fmtTime(a.check_in_at, tz)}</p>
                       <span className="inline-flex flex-wrap gap-1">
                         <AttendanceStatus row={a} />
-                        {faceOn && <FaceBadge match={a.check_in_face_match} />}
+                        {faceOn && <FaceBadge match={a.check_in_face_match} required={a.face_required} />}
                       </span>
                     </td>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2">
                         {a.check_out_selfie_path && <SelfieThumb path={a.check_out_selfie_path} size={28} />}
                         {fmtTime(a.check_out_at, tz)}
-                        {faceOn && a.check_out_at && a.check_out_face_match === false && <FaceBadge match={false} />}
+                        {faceOn && a.check_out_at && a.check_out_face_match !== true && <FaceBadge match={a.check_out_face_match} required={a.face_required} />}
                       </div>
                     </td>
                     <td className="px-4 py-2">{fmtHours(hoursBetween(a.check_in_at, a.check_out_at))}</td>
@@ -178,6 +178,7 @@ export function Dashboard() {
                             ) : (
                               <Badge tone="amber">Outside · {fmtDistance(a.check_in_distance_m)}</Badge>
                             )}
+                            {a.check_in_accuracy_m != null && a.check_in_accuracy_m > org!.max_accuracy_m && <Badge tone="amber">Low accuracy ±{Math.round(a.check_in_accuracy_m)} m</Badge>}
                             <a href={mapsLink(a.check_in_lat, a.check_in_lng)} target="_blank" rel="noreferrer" className="text-indigo-600" aria-label="Open in maps">
                               <MapPin className="h-4 w-4" />
                             </a>
@@ -222,7 +223,7 @@ export function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{v.client_name}</p>
                     <p className="truncate text-xs text-slate-500">
-                      {v.employee?.full_name} · {fmtTime(v.visited_at, tz)}{faceOn && v.face_match === false ? " · FACE MISMATCH" : ""}
+                      {v.employee?.full_name} · {fmtTime(v.visited_at, tz)}{faceOn && faceFlagged(v.face_match, v.face_required) ? (v.face_match === false ? " · FACE MISMATCH" : " · FACE NOT CHECKED") : ""}
                       {v.notes ? ` · ${v.notes}` : ""}
                     </p>
                   </div>
