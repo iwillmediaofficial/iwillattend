@@ -2,20 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
-import type { Attendance, Holiday, LeaveRequest } from "../lib/types";
+import type { Holiday, LeaveRequest } from "../lib/types";
 import { Button, Card, Empty, PageHeader, Spinner } from "../components/ui";
-import { DAY_CODES, buildMuster, monthDates, type MusterRow } from "../lib/muster";
-import { downloadCsv, todayIn } from "../lib/utils";
+import { COUNT_CODES, DAY_CODES, buildMuster, monthDates, type MusterAttendance, type MusterEmployee } from "../lib/muster";
+import { downloadCsv, fetchAll, todayIn } from "../lib/utils";
 
 interface Data {
-  employees: MusterRow["employee"][];
-  attendance: Pick<Attendance, "employee_id" | "work_date" | "status">[];
+  employees: MusterEmployee[];
+  attendance: MusterAttendance[];
   leaves: LeaveRequest[];
   holidays: Holiday[];
 }
 
 const cls = Object.fromEntries(DAY_CODES.map((c) => [c.code, c.cls]));
-const COLS = ["P", "L", "HD", "LV", "LOP", "A", "WO", "H"] as const;
+const COLS = COUNT_CODES;
 
 export function Muster() {
   const { org } = useAuth();
@@ -31,15 +31,16 @@ export function Muster() {
     const first = dates[0];
     const last = dates[dates.length - 1];
     Promise.all([
-      supabase.from("employees").select("id, full_name, emp_code, joined_on").eq("is_active", true).order("full_name"),
-      supabase.from("attendance").select("employee_id, work_date, status").gte("work_date", first).lte("work_date", last).limit(20000),
+      // Active staff, plus anyone whose last working day falls in or after this month.
+      supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on").or(`is_active.eq.true,exit_on.gte.${first}`).lte("joined_on", last).order("full_name"),
+      fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at").gte("work_date", first).lte("work_date", last).order("id")),
       supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
       supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),
     ]).then(([e, a, l, h]) => {
       if (!alive) return;
       setData({
         employees: (e.data as Data["employees"]) ?? [],
-        attendance: (a.data as Data["attendance"]) ?? [],
+        attendance: a,
         leaves: (l.data as unknown as LeaveRequest[]) ?? [],
         holidays: (h.data as Holiday[]) ?? [],
       });
@@ -50,14 +51,14 @@ export function Muster() {
   }, [dates]);
 
   const rows = useMemo(
-    () => (data ? buildMuster(month, today, org!.weekly_offs, data.employees, data.attendance, data.leaves, data.holidays) : []),
+    () => (data ? buildMuster(month, today, org!, data.employees, data.attendance, data.leaves, data.holidays) : []),
     [data, month, today, org],
   );
 
   const exportCsv = () =>
     downloadCsv(`attendance_sheet_${month}.csv`, [
-      ["Employee", "Code", ...dates.map((d) => d.slice(8)), ...COLS, "Payable days"],
-      ...rows.map((r) => [r.employee.full_name, r.employee.emp_code, ...r.days, ...COLS.map((c) => r.counts[c]), r.payable]),
+      ["Employee", "Code", ...dates.map((d) => d.slice(8)), ...COLS, "Unpaid off days", "Payable days"],
+      ...rows.map((r) => [r.employee.full_name, r.employee.emp_code, ...r.days, ...COLS.map((c) => r.counts[c]), r.unpaidOff, r.payable]),
     ]);
 
   return (
@@ -98,6 +99,7 @@ export function Muster() {
                   {COLS.map((c) => (
                     <th key={c} className="px-2 py-2 text-center font-medium">{c}</th>
                   ))}
+                  <th className="px-2 py-2 text-center font-medium" title="Weekly offs and holidays not paid under the sandwich rule">Unpaid off</th>
                   <th className="px-3 py-2 text-center font-medium">Payable</th>
                 </tr>
               </thead>
@@ -113,6 +115,7 @@ export function Muster() {
                     {COLS.map((c) => (
                       <td key={c} className="px-2 py-1.5 text-center text-slate-700">{r.counts[c] || ""}</td>
                     ))}
+                    <td className="px-2 py-1.5 text-center text-slate-700">{r.unpaidOff || ""}</td>
                     <td className="px-3 py-1.5 text-center font-semibold">{r.payable}</td>
                   </tr>
                 ))}
@@ -122,7 +125,7 @@ export function Muster() {
         )}
       </Card>
       <p className="mt-2 text-xs text-slate-500">
-        Payable days = present + late + paid leave + weekly offs + holidays, with a half day counted as 0.5. A dash means the day is before the employee's joining date. Today stays blank until someone checks in.
+        Payable days = present + late + paid leave + weekly offs + holidays, with a half day counted as 0.5. A missing check-out is paid as set in Settings. {org!.sandwich_rule ? "Off days between unpaid absences are not paid (sandwich rule). " : ""}A dash means the day is before joining or after the last working day. Today stays blank until someone checks in.
       </p>
     </>
   );

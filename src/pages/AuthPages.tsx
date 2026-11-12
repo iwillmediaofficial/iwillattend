@@ -10,7 +10,7 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
     <div className="grid min-h-full place-items-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <img src="/icon.svg" alt="" className="mx-auto mb-3 h-12 w-12" />
+          <Link to="/" aria-label="IWILL Attend home"><img src="/icon.svg" alt="" className="mx-auto mb-3 h-12 w-12" /></Link>
           <h1 className="text-xl font-semibold">{title}</h1>
           <p className="text-sm text-slate-500">{subtitle}</p>
         </div>
@@ -90,7 +90,7 @@ export function Signup() {
   }
 
   return (
-    <Shell title="Register your company" subtitle="Create the owner account first">
+    <Shell title="Register your company" subtitle="Create the owner account. 14-day free trial, no card needed.">
       <form onSubmit={submit} className="space-y-4">
         <Input label="Work email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <Input label="Password" type="password" autoComplete="new-password" required minLength={8} hint="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} />

@@ -6,7 +6,7 @@ import type { AttendanceWithEmployee, EmployeeLite } from "../lib/types";
 import { Button, Card, Empty, PageHeader, Spinner } from "../components/ui";
 import { SelfieThumb } from "../components/SelfieThumb";
 import { AttendanceStatus, FaceBadge } from "../components/badges";
-import { downloadCsv, fmtDate, fmtDistance, fmtHours, fmtTime, hoursBetween, todayIn } from "../lib/utils";
+import { downloadCsv, fetchAll, fmtDate, fmtDistance, fmtHours, fmtTime, hoursBetween, todayIn } from "../lib/utils";
 
 const faceText = (m: boolean | null) => (m === true ? "Matched" : m === false ? "MISMATCH" : "Not checked");
 
@@ -33,16 +33,19 @@ export function Reports() {
   useEffect(() => {
     let alive = true;
     setRows(null);
-    let q = supabase
-      .from("attendance")
-      .select("*, employee:employees(id, full_name, emp_code, staff_type)")
-      .gte("work_date", from)
-      .lte("work_date", to)
-      .order("work_date", { ascending: false })
-      .order("check_in_at")
-      .limit(5000);
-    if (empId) q = q.eq("employee_id", empId);
-    q.then(({ data }) => alive && setRows((data as unknown as AttendanceWithEmployee[]) ?? []));
+    fetchAll<AttendanceWithEmployee>(() => {
+      const q = supabase
+        .from("attendance")
+        .select("*, employee:employees(id, full_name, emp_code, staff_type)")
+        .gte("work_date", from)
+        .lte("work_date", to)
+        .order("work_date", { ascending: false })
+        .order("check_in_at")
+        .order("id");
+      return (empId ? q.eq("employee_id", empId) : q) as never;
+    })
+      .then((data) => alive && setRows(data))
+      .catch(() => alive && setRows([]));
     return () => {
       alive = false;
     };

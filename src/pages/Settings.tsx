@@ -3,7 +3,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 import type { Holiday, LeaveType, Shift } from "../lib/types";
-import { Badge, Button, Card, Empty, ErrorText, Input, Modal, PageHeader, Spinner } from "../components/ui";
+import { Badge, Button, Card, Empty, ErrorText, Input, Modal, PageHeader, Select, Spinner } from "../components/ui";
 import { fmtDate, todayIn } from "../lib/utils";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -13,7 +13,7 @@ interface ShiftForm { id?: string; name: string; start_time: string; end_time: s
 interface LeaveForm { id?: string; name: string; annual_quota: string; is_paid: boolean; is_active: boolean }
 
 export function Settings() {
-  const { org, employee, refresh } = useAuth();
+  const { org, employee, sub, refresh } = useAuth();
   const canEditOrg = employee!.role === "owner" || employee!.role === "admin";
   const [shifts, setShifts] = useState<Shift[] | null>(null);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
@@ -48,6 +48,13 @@ export function Settings() {
     const cur = org!.weekly_offs;
     const next = cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort();
     const { error } = await supabase.from("organizations").update({ weekly_offs: next }).eq("id", org!.id);
+    if (error) setPageError(error.message);
+    await refresh();
+  };
+
+  const setOrgRule = async (patch: Record<string, unknown>) => {
+    setPageError("");
+    const { error } = await supabase.from("organizations").update(patch).eq("id", org!.id);
     if (error) setPageError(error.message);
     await refresh();
   };
@@ -131,6 +138,21 @@ export function Settings() {
       <PageHeader title="Settings" subtitle="Shifts, weekly offs, holidays and leave rules" />
       <ErrorText>{pageError}</ErrorText>
 
+      {sub && (
+        <Card className="mb-5 p-4">
+          <h2 className="mb-2 text-sm font-semibold">Subscription</h2>
+          <p className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-medium">{sub.plan_name} plan</span>
+            {sub.state !== "ok" ? <Badge tone="red">{sub.state}</Badge> : sub.sub_status === "trial" && sub.plan_id !== "free" ? <Badge tone="indigo">Trial</Badge> : <Badge tone="green">Active</Badge>}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            {sub.active_employees} of {sub.max_employees} active employees used · Payroll {sub.payroll ? "included" : "not included"} · Face recognition {sub.face ? "included" : "not included"}
+            {sub.valid_until ? ` · Valid until ${fmtDate(sub.valid_until)}` : ""}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">To change your plan, contact IWILL Attend support.</p>
+        </Card>
+      )}
+
       <Card className="mb-5">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-semibold">Shifts</h2>
@@ -178,13 +200,26 @@ export function Settings() {
         <p className="mt-2 text-xs text-slate-500">{canEditOrg ? "Highlighted days are not counted as absent or as leave." : "Only the owner or an admin can change weekly offs."}</p>
       </Card>
 
+      <Card className="mb-5 space-y-3 p-4">
+        <h2 className="text-sm font-semibold">Attendance pay rules</h2>
+        <Select label="A day with no check-out counts as" value={org!.missing_checkout_as} disabled={!canEditOrg} onChange={(e) => setOrgRule({ missing_checkout_as: e.target.value })} hint="Applies until the employee gets the day corrected. A check-in can be closed for 18 hours; after that it is a missed check-out.">
+          <option value="half_day">Half day</option>
+          <option value="full_day">Full day</option>
+          <option value="absent">Absent (unpaid)</option>
+        </Select>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" className="mt-0.5" checked={org!.sandwich_rule} disabled={!canEditOrg} onChange={(e) => setOrgRule({ sandwich_rule: e.target.checked })} />
+          <span>Sandwich rule: do not pay a weekly off or holiday when the employee was absent on the working day before and after it, or had no paid working day in the month</span>
+        </label>
+      </Card>
+
       <Card className="mb-5 p-4">
         <h2 className="mb-2 text-sm font-semibold">Face recognition</h2>
         <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" className="mt-0.5" checked={org!.face_check_enabled} disabled={!canEditOrg} onChange={toggleFace} />
+          <input type="checkbox" className="mt-0.5" checked={org!.face_check_enabled} disabled={!canEditOrg || (!!sub && !sub.face)} onChange={toggleFace} />
           <span>Compare every check-in, check-out and visit selfie with the registered face of the employee</span>
         </label>
-        <p className="mt-2 text-xs text-slate-500">Employees register their face once, with consent. A mismatch does not block the punch; it is flagged on the dashboard and in reports. Reset a registered face from the Employees page.</p>
+        <p className="mt-2 text-xs text-slate-500">Employees register their face once, with consent. A mismatch does not block the punch; it is flagged on the dashboard and in reports. Reset a registered face from the Employees page.{sub && !sub.face ? " Face recognition is not included in your current plan." : ""}</p>
       </Card>
 
       <Card className="mb-5">

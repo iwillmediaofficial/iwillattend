@@ -20,12 +20,13 @@ interface Form {
   branch_id: string;
   shift_id: string;
   joined_on: string;
+  exit_on: string;
   is_active: boolean;
 }
 
 const blank: Form = {
   full_name: "", email: "", password: "", emp_code: "", phone: "", designation: "", department: "",
-  role: "employee", staff_type: "office", branch_id: "", shift_id: "", joined_on: "", is_active: true,
+  role: "employee", staff_type: "office", branch_id: "", shift_id: "", joined_on: "", exit_on: "", is_active: true,
 };
 
 /** Calls the manage-employee function and surfaces its error message. */
@@ -96,7 +97,8 @@ export function Employees() {
       if (form.joined_on) extra.joined_on = form.joined_on;
       if (form.id) {
         const isOwnerRow = form.role === "owner";
-        const patch: Record<string, unknown> = { ...common, ...extra, is_active: form.is_active };
+        if (!form.is_active && !form.exit_on) throw new Error("Enter the last working day so the final month is paid correctly.");
+        const patch: Record<string, unknown> = { ...common, ...extra, is_active: form.is_active, exit_on: form.is_active ? null : form.exit_on };
         if (canAssignRoles && !isOwnerRow && form.id !== me!.id) patch.role = form.role;
         const { error } = await supabase.from("employees").update(patch).eq("id", form.id);
         if (error) throw error;
@@ -140,7 +142,7 @@ export function Employees() {
     setForm({
       id: r.id, full_name: r.full_name, email: r.email, password: "", emp_code: r.emp_code ?? "", phone: r.phone ?? "",
       designation: r.designation ?? "", department: r.department ?? "", role: r.role, staff_type: r.staff_type,
-      branch_id: r.branch_id ?? "", shift_id: r.shift_id ?? "", joined_on: r.joined_on, is_active: r.is_active,
+      branch_id: r.branch_id ?? "", shift_id: r.shift_id ?? "", joined_on: r.joined_on, exit_on: r.exit_on ?? "", is_active: r.is_active,
     });
   };
 
@@ -271,6 +273,9 @@ export function Employees() {
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} /> Active (can sign in and mark attendance)
               </label>
+            )}
+            {form.id && !form.is_active && (
+              <Input label="Last working day" type="date" required value={form.exit_on} onChange={(e) => set("exit_on", e.target.value)} hint="Attendance and pay are counted up to this date." />
             )}
             <ErrorText>{error}</ErrorText>
             <Button type="submit" className="w-full" loading={busy}>

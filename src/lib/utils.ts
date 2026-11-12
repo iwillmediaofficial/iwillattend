@@ -94,3 +94,20 @@ export function errMsg(e: unknown): string {
   }
   return "Something went wrong";
 }
+
+interface Page<T> { data: T[] | null; error: { message: string } | null }
+
+/**
+ * Reads every row of a query. Supabase returns at most 1,000 rows per request,
+ * so this keeps asking for the next page. The query must have a stable order.
+ */
+export async function fetchAll<T>(make: () => { range: (from: number, to: number) => PromiseLike<Page<T>> }): Promise<T[]> {
+  const size = 1000;
+  const out: T[] = [];
+  for (let from = 0; ; from += size) {
+    const { data, error } = await make().range(from, from + size - 1);
+    if (error) throw new Error(error.message);
+    out.push(...(data ?? []));
+    if (!data || data.length < size) return out;
+  }
+}

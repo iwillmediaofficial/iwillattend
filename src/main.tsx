@@ -20,26 +20,43 @@ import { Muster } from "./pages/Muster";
 import { Settings } from "./pages/Settings";
 import { Payroll } from "./pages/Payroll";
 import { Payslips } from "./pages/Payslips";
+import { Landing } from "./pages/Landing";
+import { Platform } from "./pages/Platform";
 
 function Guard({ allow, children }: { allow: boolean; children: ReactNode }) {
   return allow ? <>{children}</> : <Navigate to="/punch" replace />;
 }
 
 function App() {
-  const { loading, session, employee, isAdmin, isManager } = useAuth();
+  const { loading, session, employee, isAdmin, isManager, isPlatformAdmin, signOut } = useAuth();
 
   if (loading) return <Spinner />;
 
   if (!session) {
     return (
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<Login />} />
       </Routes>
     );
   }
 
-  if (!employee) return <Onboarding />;
+  if (!employee) {
+    if (!isPlatformAdmin) return <Onboarding />;
+    // Platform admin without a company: only the platform panel.
+    return (
+      <div className="min-h-full">
+        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:px-8">
+          <span className="text-sm font-semibold text-indigo-600">IWILL Attend · Platform</span>
+          <button onClick={signOut} className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">Sign out</button>
+        </header>
+        <main className="mx-auto max-w-6xl px-4 py-5 md:px-8">
+          <Platform />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -51,6 +68,7 @@ function App() {
         <Route path="/muster" element={<Guard allow={isManager}><Muster /></Guard>} />
         <Route path="/settings" element={<Guard allow={isAdmin}><Settings /></Guard>} />
         <Route path="/payslips" element={<Payslips />} />
+        <Route path="/platform" element={<Guard allow={isPlatformAdmin}><Platform /></Guard>} />
         <Route path="/payroll" element={<Guard allow={isAdmin}><Payroll /></Guard>} />
         <Route path="/visits" element={<Guard allow={employee.staff_type === "field"}><Visits /></Guard>} />
         <Route path="/dashboard" element={<Guard allow={isManager}><Dashboard /></Guard>} />

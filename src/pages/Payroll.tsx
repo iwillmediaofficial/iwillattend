@@ -9,8 +9,9 @@ import {
   type PayrollRun, type PayrollSettings, type Payslip, type SalaryStructure,
 } from "../lib/payroll";
 import { downloadCsv, errMsg, todayIn } from "../lib/utils";
+import { monthDates } from "../lib/muster";
 
-interface Emp { id: string; full_name: string; emp_code: string | null; joined_on: string; designation: string | null; department: string | null }
+interface Emp { id: string; full_name: string; emp_code: string | null; joined_on: string; exit_on: string | null; designation: string | null; department: string | null }
 type Tab = "run" | "salaries" | "rules";
 type StructForm = { [K in keyof Omit<SalaryStructure, "employee_id" | "pf_applicable" | "esi_applicable">]: string } & { employee_id: string; pf_applicable: boolean; esi_applicable: boolean };
 
@@ -18,7 +19,7 @@ const SLIP_EMP = "employee:employees(full_name, emp_code, designation, departmen
 const num = (v: unknown) => Number(v) || 0;
 
 export function Payroll() {
-  const { org, employee: me } = useAuth();
+  const { org, employee: me, sub } = useAuth();
   const today = todayIn(org!.timezone);
   const [tab, setTab] = useState<Tab>("run");
   const [settings, setSettings] = useState<PayrollSettings | null>(null);
@@ -39,7 +40,7 @@ export function Payroll() {
   const loadBase = useCallback(async () => {
     const [s, e, st] = await Promise.all([
       supabase.from("payroll_settings").select("*").maybeSingle(),
-      supabase.from("employees").select("id, full_name, emp_code, joined_on, designation, department").eq("is_active", true).order("full_name"),
+      supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on, designation, department").eq("is_active", true).order("full_name"),
       supabase.from("salary_structures").select("*"),
     ]);
     setSettings({ ...DEFAULT_SETTINGS, ...((s.data as Partial<PayrollSettings> | null) ?? {}) });
@@ -71,7 +72,11 @@ export function Payroll() {
 
   // ---------- Run ----------
   const calculate = () => guard(async () => {
-    const eligible = emps.filter((e) => structOf.has(e.id) && e.joined_on <= `${month}-31`);
+    // Active staff, plus anyone whose last working day falls in or after this month.
+    const staff = await supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on, designation, department")
+      .or(`is_active.eq.true,exit_on.gte.${month}-01`).lte("joined_on", monthDates(month).at(-1)!).order("full_name");
+    if (staff.error) throw staff.error;
+    const eligible = ((staff.data as Emp[]) ?? []).filter((e) => structOf.has(e.id));
     if (eligible.length === 0) throw new Error("No employee has a salary set. Add salaries in the Salaries tab first.");
     let runId = run?.id;
     if (!runId) {
@@ -79,7 +84,7 @@ export function Payroll() {
       if (error) throw error;
       runId = data.id as string;
     }
-    const rows = await loadMuster(month, today, org!.weekly_offs, eligible);
+    const rows = await loadMuster(month, today, org!, eligible);
     const keep = new Map(slips.map((s) => [s.employee_id, s]));
     const fresh = rows.map((row) => {
       const old = keep.get(row.employee.id);
@@ -177,6 +182,17 @@ export function Payroll() {
   };
   const setS = <K extends keyof PayrollSettings>(k: K, v: PayrollSettings[K]) => setSettings((s) => s && { ...s, [k]: v });
 
+  if (sub && !sub.payroll) {
+    return (
+      <>
+        <PageHeader title="Payroll" subtitle="Salaries, monthly payroll and payslips" />
+        <Card className="p-6 text-center">
+          <p className="text-base font-semibold">Payroll is not included in the {sub.plan_name} plan</p>
+          <p className="mt-1 text-sm text-slate-600">Upgrade to Standard or Premium to run payroll and issue payslips. Contact IWILL Attend support to upgrade.</p>
+        </Card>
+      </>
+    );
+  }
   if (!settings) return <Spinner />;
 
   const locked = run?.status === "locked";

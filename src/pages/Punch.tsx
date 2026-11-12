@@ -20,6 +20,7 @@ export function Punch() {
   const [row, setRow] = useState<Attendance | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"in" | "out" | null>(null);
+  const [missed, setMissed] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     // Latest record: today's, or an earlier one that was never checked out.
@@ -31,7 +32,11 @@ export function Punch() {
       .limit(1)
       .maybeSingle();
     const r = data as Attendance | null;
-    setRow(r && (r.work_date === today || !r.check_out_at) ? r : null);
+    // A check-in can be closed for 18 hours. After that it is a missed check-out,
+    // fixed by a correction request, and must not block today's check-in.
+    const stillOpen = !!r && !r.check_out_at && !r.missing_checkout && Date.now() - Date.parse(r.check_in_at) < 18 * 3_600_000;
+    setRow(r && (r.work_date === today || stillOpen) ? r : null);
+    setMissed(r && r.work_date !== today && !r.check_out_at && !stillOpen ? r.work_date : null);
     setLoading(false);
   }, [employee, today]);
 
@@ -75,6 +80,11 @@ export function Punch() {
 
         {!row && (
           <>
+            {missed && (
+              <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-left text-sm text-amber-800">
+                You did not check out on {fmtDate(missed)}. Open History and request a correction so that day is counted properly.
+              </p>
+            )}
             <Clock className="mx-auto mb-2 h-10 w-10 text-slate-300" />
             <p className="mb-1 text-lg font-semibold">Not checked in yet</p>
             <p className="mb-5 text-sm text-slate-500">

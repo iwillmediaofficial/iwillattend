@@ -8,6 +8,10 @@ export interface Organization {
   /** 0 = Sunday ... 6 = Saturday */
   weekly_offs: number[];
   face_check_enabled: boolean;
+  /** How a past day with no check-out is paid. */
+  missing_checkout_as: "half_day" | "full_day" | "absent";
+  /** Weekly offs and holidays between unpaid absences are not paid. */
+  sandwich_rule: boolean;
 }
 
 export interface Shift {
@@ -93,6 +97,8 @@ export interface Employee {
   branch_id: string | null;
   shift_id: string | null;
   joined_on: string;
+  /** Last working day, set when the employee is deactivated. */
+  exit_on: string | null;
   face_enrolled_at: string | null;
   is_active: boolean;
 }
@@ -109,6 +115,8 @@ export interface Attendance {
   status: DayStatus;
   /** True when a manager-approved correction created or changed this row. */
   is_corrected: boolean;
+  /** Set by the hourly job when a check-in was never checked out. */
+  missing_checkout: boolean;
   check_in_at: string;
   check_in_lat: number | null;
   check_in_lng: number | null;
@@ -147,3 +155,30 @@ export type VisitWithEmployee = Visit & { employee: EmployeeLite | null };
 
 export const ADMIN_ROLES: Role[] = ["owner", "admin", "hr"];
 export const MANAGER_ROLES: Role[] = ["owner", "admin", "hr", "manager"];
+
+export interface Plan {
+  id: string;
+  name: string;
+  price_monthly: number;
+  max_employees: number;
+  payroll: boolean;
+  face: boolean;
+  sort_order: number;
+}
+
+/** What the signed-in user's company is entitled to right now. */
+export interface Subscription {
+  plan_id: string;
+  plan_name: string;
+  max_employees: number;
+  payroll: boolean;
+  face: boolean;
+  /** ok = normal; expired = paid plan lapsed; suspended = switched off by the platform admin; over_limit = too many employees for 7+ days. */
+  state: "ok" | "expired" | "suspended" | "over_limit";
+  /** Date the company first had more active employees than its plan allows. */
+  over_limit_since: string | null;
+  sub_status: "trial" | "active" | "suspended";
+  valid_until: string | null;
+  active_employees: number;
+  is_platform_admin: boolean;
+}

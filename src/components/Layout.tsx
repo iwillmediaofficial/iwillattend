@@ -1,9 +1,32 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Building2, CalendarClock, ClipboardCheck, FileBarChart, Fingerprint, IndianRupee, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCheck, FileBarChart, Fingerprint, Globe, IndianRupee, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
+import type { Subscription } from "../lib/types";
+import { addDays, fmtDate, todayIn } from "../lib/utils";
+
+function subscriptionNotice(sub: Subscription | null, isAdmin: boolean, tz: string): { text: string; danger: boolean } | null {
+  if (!sub) return null;
+  if (sub.state === "suspended") return { text: "This company account is suspended, so attendance is paused. Please contact IWILL Attend support.", danger: true };
+  if (sub.state === "over_limit") return { text: `Attendance is paused: ${sub.active_employees} employees are active but the ${sub.plan_name} plan allows ${sub.max_employees}. Upgrade, or deactivate staff, to resume.`, danger: true };
+  if (sub.state === "expired") return { text: `The subscription ended on ${fmtDate(sub.valid_until!)}. Attendance is paused until it is renewed.`, danger: true };
+  if (!isAdmin) return null;
+  const today = todayIn(tz);
+  if (sub.active_employees > sub.max_employees) {
+    const pauseOn = addDays(sub.over_limit_since ?? today, 8);
+    return { text: `${sub.active_employees} employees are active but the ${sub.plan_name} plan allows ${sub.max_employees}. Attendance will pause on ${fmtDate(pauseOn)} unless you upgrade or deactivate staff.`, danger: true };
+  }
+  if (sub.sub_status === "trial" && sub.valid_until) {
+    if (sub.valid_until < today) return { text: `Your free trial has ended. You are now on the Free plan: up to ${sub.max_employees} employees, without payroll or face recognition. Contact us to upgrade.`, danger: false };
+    const days = Math.round((Date.parse(sub.valid_until) - Date.parse(today)) / 86_400_000);
+    return { text: `Free trial of ${sub.plan_name}: ${days === 0 ? "ends today" : `${days} day${days === 1 ? "" : "s"} left`}.`, danger: false };
+  }
+  if (sub.active_employees >= sub.max_employees) return { text: `You have reached the ${sub.plan_name} plan limit of ${sub.max_employees} active employees. Upgrade to add more.`, danger: false };
+  return null;
+}
 
 export function Layout() {
-  const { employee, org, isAdmin, isManager, signOut } = useAuth();
+  const { employee, org, sub, isAdmin, isManager, isPlatformAdmin, signOut } = useAuth();
+  const notice = subscriptionNotice(sub, isAdmin, org?.timezone ?? "Asia/Kolkata");
 
   const items = [
     { to: "/punch", label: "Attendance", icon: Fingerprint, show: true },
@@ -19,6 +42,7 @@ export function Layout() {
     { to: "/employees", label: "Employees", icon: Users, show: isAdmin },
     { to: "/branches", label: "Branches", icon: Building2, show: isAdmin },
     { to: "/settings", label: "Settings", icon: SettingsIcon, show: isAdmin },
+    { to: "/platform", label: "Platform", icon: Globe, show: isPlatformAdmin },
   ].filter((i) => i.show);
 
   return (
@@ -64,6 +88,9 @@ export function Layout() {
 
       <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:px-8 md:pb-8">
         <div className="mx-auto max-w-6xl">
+          {notice && (
+            <p className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${notice.danger ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-800"}`}>{notice.text}</p>
+          )}
           <Outlet />
         </div>
       </main>

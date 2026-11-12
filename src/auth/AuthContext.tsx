@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { ADMIN_ROLES, MANAGER_ROLES, type Branch, type Employee, type Organization } from "../lib/types";
+import { ADMIN_ROLES, MANAGER_ROLES, type Branch, type Employee, type Organization, type Subscription } from "../lib/types";
 
 interface AuthState {
   loading: boolean;
@@ -9,6 +9,8 @@ interface AuthState {
   employee: Employee | null;
   org: Organization | null;
   branch: Branch | null;
+  sub: Subscription | null;
+  isPlatformAdmin: boolean;
   isAdmin: boolean;
   isManager: boolean;
   refresh: () => Promise<void>;
@@ -20,8 +22,10 @@ const Ctx = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
-  const [profile, setProfile] = useState<{ employee: Employee; org: Organization; branch: Branch | null } | null>(null);
+  const [profile, setProfile] = useState<{ employee: Employee; org: Organization; branch: Branch | null; sub: Subscription | null } | null>(null);
   const [profileFor, setProfileFor] = useState<string | null | undefined>(undefined);
+  // A platform admin login that does not belong to any company.
+  const [platformOnly, setPlatformOnly] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -36,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async (uid: string | null) => {
     if (!uid) {
+      setPlatformOnly(false);
       setProfile(null);
       setProfileFor(null);
       return;
@@ -48,8 +53,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
     if (data) {
       const { org, branch, ...employee } = data as Employee & { org: Organization; branch: Branch | null };
-      setProfile({ employee: employee as Employee, org, branch });
+      const { data: subData } = await supabase.rpc("my_subscription");
+      const sub = (subData as Subscription | null) ?? null;
+      // Face check only runs when the company's plan includes it.
+      setProfile({ employee: employee as Employee, org: { ...org, face_check_enabled: org.face_check_enabled && (sub?.face ?? true) }, branch, sub });
+      setPlatformOnly(false);
     } else {
+      const { data: pa } = await supabase.rpc("is_platform_admin");
+      setPlatformOnly(pa === true);
       setProfile(null);
     }
     setProfileFor(uid);
@@ -67,6 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       employee: profile?.employee ?? null,
       org: profile?.org ?? null,
       branch: profile?.branch ?? null,
+      sub: profile?.sub ?? null,
+      isPlatformAdmin: profile?.sub?.is_platform_admin ?? platformOnly,
       isAdmin: !!role && ADMIN_ROLES.includes(role),
       isManager: !!role && MANAGER_ROLES.includes(role),
       refresh: () => load(userId),
@@ -74,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
       },
     };
-  }, [sessionReady, profileFor, userId, session, profile, load]);
+  }, [sessionReady, profileFor, userId, session, profile, platformOnly, load]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

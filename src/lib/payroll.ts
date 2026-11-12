@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
-import { buildMuster, monthDates, type MusterRow } from "./muster";
-import type { Attendance, Holiday, LeaveRequest } from "./types";
+import { buildMuster, monthDates, type MusterAttendance, type MusterEmployee, type MusterRow, type MusterRules } from "./muster";
+import type { Holiday, LeaveRequest } from "./types";
+import { fetchAll } from "./utils";
 
 export interface PayrollSettings {
   pay_days_basis: "calendar" | "26" | "30";
@@ -152,20 +153,20 @@ export function computeSlip(st: SalaryStructure, s: PayrollSettings, row: Muster
 }
 
 /** Builds the monthly attendance sheet for the given employees (same rules as the Monthly sheet page). */
-export async function loadMuster(month: string, today: string, weeklyOffs: number[], employees: MusterRow["employee"][]): Promise<MusterRow[]> {
+export async function loadMuster(month: string, today: string, rules: MusterRules, employees: MusterEmployee[]): Promise<MusterRow[]> {
   const dates = monthDates(month);
   const first = dates[0];
   const last = dates[dates.length - 1];
-  const [a, l, h] = await Promise.all([
-    supabase.from("attendance").select("employee_id, work_date, status").gte("work_date", first).lte("work_date", last).limit(20000),
+  const [attendance, l, h] = await Promise.all([
+    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at").gte("work_date", first).lte("work_date", last).order("id")),
     supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
     supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),
   ]);
-  const err = a.error ?? l.error ?? h.error;
+  const err = l.error ?? h.error;
   if (err) throw err;
   return buildMuster(
-    month, today, weeklyOffs, employees,
-    (a.data as Pick<Attendance, "employee_id" | "work_date" | "status">[]) ?? [],
+    month, today, rules, employees,
+    attendance,
     (l.data as unknown as LeaveRequest[]) ?? [],
     (h.data as Holiday[]) ?? [],
   );
