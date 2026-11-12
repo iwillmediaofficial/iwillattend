@@ -16,6 +16,7 @@ export function Visits() {
   const [open, setOpen] = useState(false);
   const [client, setClient] = useState("");
   const [notes, setNotes] = useState("");
+  const [result, setResult] = useState("");
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -43,7 +44,10 @@ export function Visits() {
       p_notes: notes,
     });
     if (error) throw error;
-    if (c.descriptor) await supabase.rpc("record_face", { p_kind: "visit", p_id: (data as Visit).id, p_descriptor: c.descriptor });
+    if (c.descriptor) {
+      const { data: matched, error: faceError } = await supabase.rpc("record_face", { p_kind: "visit", p_id: (data as Visit).id, p_descriptor: c.descriptor });
+      setResult(faceError ? "Visit saved · Face not checked" : matched ? "Visit saved · Face matched" : "Visit saved · Face did not match (flagged to your manager)");
+    } else setResult("Visit saved");
     setOpen(false);
     setClient("");
     setNotes("");
@@ -61,6 +65,7 @@ export function Visits() {
           </Button>
         }
       />
+      {result && <p role="status" className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${result.endsWith("Face matched") || result === "Visit saved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{result}</p>}
       <Card>
         {!rows ? (
           <Spinner />

@@ -33,3 +33,11 @@ export async function describeFace(input: HTMLVideoElement | HTMLCanvasElement):
 export function averageDescriptors(list: number[][]): number[] {
   return list[0].map((_, i) => list.reduce((s, d) => s + d[i], 0) / list.length);
 }
+
+/** Quick check on the live camera: is a face in view, and is it close enough? Needs no stored template. */
+export async function faceGuide(video: HTMLVideoElement): Promise<"none" | "far" | "ok"> {
+  const faceapi = await loadFace();
+  const found = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }));
+  if (!found) return "none";
+  return found.box.width / video.videoWidth < 0.22 ? "far" : "ok";
+}

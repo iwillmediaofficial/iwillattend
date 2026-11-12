@@ -155,6 +155,7 @@ export function Dashboard() {
                       <span className="inline-flex flex-wrap gap-1">
                         <AttendanceStatus row={a} />
                         {faceOn && <FaceBadge match={a.check_in_face_match} required={a.face_required} />}
+                        {faceOn && a.check_in_face_fails + a.check_out_face_fails > 0 && <Badge tone="amber">{a.check_in_face_fails + a.check_out_face_fails} failed face attempt{a.check_in_face_fails + a.check_out_face_fails === 1 ? "" : "s"}</Badge>}
                       </span>
                     </td>
                     <td className="px-4 py-2">

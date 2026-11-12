@@ -22,6 +22,8 @@ export function Punch() {
   const [mode, setMode] = useState<"in" | "out" | null>(null);
   const [missed, setMissed] = useState<string | null>(null);
   const [wfhToday, setWfhToday] = useState(false);
+  // Shown after a punch: what was recorded and whether the face matched.
+  const [result, setResult] = useState<{ text: string; ok: boolean } | null>(null);
 
   const load = useCallback(async () => {
     // Latest record: today's, or an earlier one that was never checked out.
@@ -57,10 +59,16 @@ export function Punch() {
       p_selfie_path: path,
     });
     if (error) throw error;
+    const saved = data as Attendance;
+    let face = "";
+    let ok = true;
     if (c.descriptor) {
       // The punch is already saved; a failed comparison only leaves it marked "not checked".
-      await supabase.rpc("record_face", { p_kind: kind, p_id: (data as Attendance).id, p_descriptor: c.descriptor });
+      const { data: matched, error: faceError } = await supabase.rpc("record_face", { p_kind: kind, p_id: saved.id, p_descriptor: c.descriptor });
+      face = faceError ? " · Face not checked" : matched ? " · Face matched" : " · Face did not match (flagged to your manager)";
+      ok = !faceError && matched === true;
     }
+    setResult({ text: `${kind === "in" ? "Checked in" : "Checked out"} at ${fmtTime(kind === "in" ? saved.check_in_at : saved.check_out_at, tz)}${face}`, ok });
     await load();
     setMode(null);
   };
@@ -74,6 +82,10 @@ export function Punch() {
   return (
     <>
       <PageHeader title={`Hello, ${employee!.full_name.split(" ")[0]}`} subtitle={fmtDate(today)} />
+
+      {result && (
+        <p role="status" className={`mx-auto mb-4 max-w-md rounded-lg px-4 py-3 text-sm font-medium ${result.ok ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{result.text}</p>
+      )}
 
       <Card className="mx-auto max-w-md p-6 text-center">
         <div className="mb-4 flex justify-center gap-2">
@@ -123,6 +135,7 @@ export function Punch() {
             <div className="mb-4 flex flex-wrap justify-center gap-1">
               <AttendanceStatus row={row} />
               {faceOn && <FaceBadge match={row.check_in_face_match} required={row.face_required} />}
+              {faceOn && row.check_out_at && row.check_out_face_match === false && <FaceBadge match={false} />}
             </div>
             {openFromEarlier && <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">You did not check out on {fmtDate(row.work_date)}. Check out to close it.</p>}
             <dl className="mb-5 grid grid-cols-2 gap-3 text-left text-sm">

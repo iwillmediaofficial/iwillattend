@@ -146,6 +146,9 @@ export interface Attendance {
   check_out_face_match: boolean | null;
   /** The employee had a registered face at this punch, so an unchecked face is a flag. */
   face_required: boolean;
+  /** Face checks that failed on the camera screen before this punch was confirmed. */
+  check_in_face_fails: number;
+  check_out_face_fails: number;
 }
 
 export interface Visit {
@@ -161,6 +164,7 @@ export interface Visit {
   notes: string | null;
   face_match: boolean | null;
   face_required: boolean;
+  face_fails: number;
 }
 
 export type EmployeeLite = Pick<Employee, "id" | "full_name" | "emp_code" | "staff_type">;
