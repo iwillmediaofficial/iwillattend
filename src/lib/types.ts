@@ -7,6 +7,7 @@ export interface Organization {
   timezone: string;
   /** 0 = Sunday ... 6 = Saturday */
   weekly_offs: number[];
+  face_check_enabled: boolean;
 }
 
 export interface Shift {
@@ -92,6 +93,7 @@ export interface Employee {
   branch_id: string | null;
   shift_id: string | null;
   joined_on: string;
+  face_enrolled_at: string | null;
   is_active: boolean;
 }
 
@@ -120,6 +122,9 @@ export interface Attendance {
   check_out_distance_m: number | null;
   check_out_in_geofence: boolean | null;
   check_out_selfie_path: string | null;
+  /** null = the selfie was not compared (not enrolled, face check off, or model failed to load). */
+  check_in_face_match: boolean | null;
+  check_out_face_match: boolean | null;
 }
 
 export interface Visit {
@@ -133,6 +138,7 @@ export interface Visit {
   selfie_path: string;
   client_name: string;
   notes: string | null;
+  face_match: boolean | null;
 }
 
 export type EmployeeLite = Pick<Employee, "id" | "full_name" | "emp_code" | "staff_type">;

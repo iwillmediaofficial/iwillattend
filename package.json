@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
+    "@vladmandic/face-api": "^1.7.15",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.72.0",
     "react": "^19.3.1",

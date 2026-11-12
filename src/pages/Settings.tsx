@@ -52,6 +52,13 @@ export function Settings() {
     await refresh();
   };
 
+  const toggleFace = async () => {
+    setPageError("");
+    const { error } = await supabase.from("organizations").update({ face_check_enabled: !org!.face_check_enabled }).eq("id", org!.id);
+    if (error) setPageError(error.message);
+    await refresh();
+  };
+
   const saveShift = async (e: FormEvent) => {
     e.preventDefault();
     if (!shiftForm) return;
@@ -169,6 +176,15 @@ export function Settings() {
           })}
         </div>
         <p className="mt-2 text-xs text-slate-500">{canEditOrg ? "Highlighted days are not counted as absent or as leave." : "Only the owner or an admin can change weekly offs."}</p>
+      </Card>
+
+      <Card className="mb-5 p-4">
+        <h2 className="mb-2 text-sm font-semibold">Face recognition</h2>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" className="mt-0.5" checked={org!.face_check_enabled} disabled={!canEditOrg} onChange={toggleFace} />
+          <span>Compare every check-in, check-out and visit selfie with the registered face of the employee</span>
+        </label>
+        <p className="mt-2 text-xs text-slate-500">Employees register their face once, with consent. A mismatch does not block the punch; it is flagged on the dashboard and in reports. Reset a registered face from the Employees page.</p>
       </Card>
 
       <Card className="mb-5">

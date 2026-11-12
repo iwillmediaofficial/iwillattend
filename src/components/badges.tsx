@@ -25,3 +25,10 @@ export function RequestBadge({ status }: { status: RequestStatus }) {
     </Badge>
   );
 }
+
+/** Result of comparing a punch selfie with the registered face. */
+export function FaceBadge({ match }: { match: boolean | null | undefined }) {
+  if (match === true) return <Badge tone="green">Face matched</Badge>;
+  if (match === false) return <Badge tone="red">Face mismatch</Badge>;
+  return <Badge>Face not checked</Badge>;
+}

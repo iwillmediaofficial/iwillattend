@@ -6,7 +6,7 @@ import type { AttendanceWithEmployee, Branch, EmployeeLite, VisitWithEmployee } 
 import { Badge, Card, Empty, PageHeader, Spinner } from "../components/ui";
 import { MapView, type MapPoint } from "../components/MapView";
 import { SelfieThumb } from "../components/SelfieThumb";
-import { AttendanceStatus } from "../components/badges";
+import { AttendanceStatus, FaceBadge } from "../components/badges";
 import { fmtDistance, fmtHours, fmtTime, hoursBetween, mapsLink, todayIn } from "../lib/utils";
 
 interface Data {
@@ -20,6 +20,7 @@ const EMP = "employee:employees(id, full_name, emp_code, staff_type)";
 
 export function Dashboard() {
   const { org } = useAuth();
+  const faceOn = org!.face_check_enabled;
   const tz = org!.timezone;
   const [date, setDate] = useState(todayIn(tz));
   const [data, setData] = useState<Data | null>(null);
@@ -85,6 +86,10 @@ export function Dashboard() {
 
   const presentIds = new Set(data.attendance.map((a) => a.employee_id));
   const absent = data.employees.filter((e) => !presentIds.has(e.id));
+  const mismatches =
+    data.attendance.filter((a) => a.check_in_face_match === false).length +
+    data.attendance.filter((a) => a.check_out_face_match === false).length +
+    data.visits.filter((v) => v.face_match === false).length;
   const stats = [
     { label: "Active staff", value: data.employees.length, cls: "text-slate-900" },
     { label: "Checked in", value: data.attendance.length, cls: "text-emerald-600" },
@@ -105,6 +110,12 @@ export function Dashboard() {
           </Card>
         ))}
       </div>
+
+      {faceOn && mismatches > 0 && (
+        <p className="mb-5 rounded-lg bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {mismatches} punch{mismatches === 1 ? "" : "es"} on this day did not match the registered face. Check the selfies below.
+        </p>
+      )}
 
       <div className="mb-5">
         <MapView points={points} className="h-80" />
@@ -141,12 +152,16 @@ export function Dashboard() {
                     </td>
                     <td className="px-4 py-2">
                       <p>{fmtTime(a.check_in_at, tz)}</p>
-                      <AttendanceStatus row={a} />
+                      <span className="inline-flex flex-wrap gap-1">
+                        <AttendanceStatus row={a} />
+                        {faceOn && <FaceBadge match={a.check_in_face_match} />}
+                      </span>
                     </td>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2">
                         {a.check_out_selfie_path && <SelfieThumb path={a.check_out_selfie_path} size={28} />}
                         {fmtTime(a.check_out_at, tz)}
+                        {faceOn && a.check_out_at && a.check_out_face_match === false && <FaceBadge match={false} />}
                       </div>
                     </td>
                     <td className="px-4 py-2">{fmtHours(hoursBetween(a.check_in_at, a.check_out_at))}</td>
@@ -207,7 +222,7 @@ export function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{v.client_name}</p>
                     <p className="truncate text-xs text-slate-500">
-                      {v.employee?.full_name} · {fmtTime(v.visited_at, tz)}
+                      {v.employee?.full_name} · {fmtTime(v.visited_at, tz)}{faceOn && v.face_match === false ? " · FACE MISMATCH" : ""}
                       {v.notes ? ` · ${v.notes}` : ""}
                     </p>
                   </div>

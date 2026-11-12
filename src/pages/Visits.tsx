@@ -10,6 +10,7 @@ import { addDays, fmtDate, fmtTime, mapsLink, todayIn, uploadSelfie } from "../l
 
 export function Visits() {
   const { employee, org } = useAuth();
+  const faceOn = org!.face_check_enabled && !!employee!.face_enrolled_at;
   const tz = org!.timezone;
   const [rows, setRows] = useState<Visit[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -33,7 +34,7 @@ export function Visits() {
   const submit = async (c: Capture) => {
     if (!client.trim()) throw new Error("Enter the client or place name.");
     const path = await uploadSelfie(employee!.org_id, employee!.id, "visit", c.blob);
-    const { error } = await supabase.rpc("log_visit", {
+    const { data, error } = await supabase.rpc("log_visit", {
       p_lat: c.lat,
       p_lng: c.lng,
       p_accuracy: c.accuracy,
@@ -42,6 +43,7 @@ export function Visits() {
       p_notes: notes,
     });
     if (error) throw error;
+    if (c.descriptor) await supabase.rpc("record_face", { p_kind: "visit", p_id: (data as Visit).id, p_descriptor: c.descriptor });
     setOpen(false);
     setClient("");
     setNotes("");
@@ -86,7 +88,7 @@ export function Visits() {
       </Card>
 
       {open && (
-        <CaptureFlow title="Log a visit" confirmLabel="Save visit" onClose={() => setOpen(false)} onConfirm={submit}>
+        <CaptureFlow title="Log a visit" confirmLabel="Save visit" onClose={() => setOpen(false)} onConfirm={submit} face={faceOn}>
           <Input label="Client / place name" required maxLength={160} value={client} onChange={(e) => setClient(e.target.value)} />
           <Field label="Notes (optional)">
             <textarea

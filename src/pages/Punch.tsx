@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock, LogIn, LogOut, MapPin } from "lucide-react";
+import { CheckCircle2, Clock, LogIn, LogOut, MapPin, ScanFace } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 import type { Attendance } from "../lib/types";
 import { Badge, Button, Card, PageHeader, Spinner } from "../components/ui";
 import { CaptureFlow, type Capture } from "../components/CaptureFlow";
 import { SelfieThumb } from "../components/SelfieThumb";
-import { AttendanceStatus } from "../components/badges";
+import { AttendanceStatus, FaceBadge } from "../components/badges";
+import { FaceEnroll } from "../components/FaceEnroll";
 import { fmtDate, fmtDistance, fmtHours, fmtTime, hoursBetween, todayIn, uploadSelfie } from "../lib/utils";
 
 export function Punch() {
-  const { employee, org, branch } = useAuth();
+  const { employee, org, branch, refresh } = useAuth();
+  const faceOn = org!.face_check_enabled;
+  const enrolled = !!employee!.face_enrolled_at;
+  const [enrolling, setEnrolling] = useState(false);
   const tz = org!.timezone;
   const today = todayIn(tz);
   const [row, setRow] = useState<Attendance | null>(null);
@@ -38,13 +42,17 @@ export function Punch() {
   const submit = async (c: Capture) => {
     const kind = mode!;
     const path = await uploadSelfie(employee!.org_id, employee!.id, kind, c.blob);
-    const { error } = await supabase.rpc(kind === "in" ? "check_in" : "check_out", {
+    const { data, error } = await supabase.rpc(kind === "in" ? "check_in" : "check_out", {
       p_lat: c.lat,
       p_lng: c.lng,
       p_accuracy: c.accuracy,
       p_selfie_path: path,
     });
     if (error) throw error;
+    if (c.descriptor) {
+      // The punch is already saved; a failed comparison only leaves it marked "not checked".
+      await supabase.rpc("record_face", { p_kind: kind, p_id: (data as Attendance).id, p_descriptor: c.descriptor });
+    }
     await load();
     setMode(null);
   };
@@ -76,9 +84,18 @@ export function Punch() {
                   : "No branch is assigned to you yet. Ask your admin."
                 : "Your current location is captured with your selfie."}
             </p>
-            <Button variant="success" className="w-full py-3 text-base" onClick={() => setMode("in")}>
-              <LogIn className="h-5 w-5" /> Check in
-            </Button>
+            {faceOn && !enrolled ? (
+              <>
+                <p className="mb-3 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-800">Register your face once before your first check-in.</p>
+                <Button className="w-full py-3 text-base" onClick={() => setEnrolling(true)}>
+                  <ScanFace className="h-5 w-5" /> Register my face
+                </Button>
+              </>
+            ) : (
+              <Button variant="success" className="w-full py-3 text-base" onClick={() => setMode("in")}>
+                <LogIn className="h-5 w-5" /> Check in
+              </Button>
+            )}
           </>
         )}
 
@@ -88,7 +105,10 @@ export function Punch() {
               <SelfieThumb path={row.check_in_selfie_path} size={56} />
               {row.check_out_selfie_path && <SelfieThumb path={row.check_out_selfie_path} size={56} />}
             </div>
-            <div className="mb-4 flex justify-center"><AttendanceStatus row={row} /></div>
+            <div className="mb-4 flex flex-wrap justify-center gap-1">
+              <AttendanceStatus row={row} />
+              {faceOn && <FaceBadge match={row.check_in_face_match} />}
+            </div>
             {openFromEarlier && <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">You did not check out on {fmtDate(row.work_date)}. Check out to close it.</p>}
             <dl className="mb-5 grid grid-cols-2 gap-3 text-left text-sm">
               <div className="rounded-lg bg-slate-50 p-3">
@@ -123,12 +143,15 @@ export function Punch() {
         )}
       </Card>
 
+      {enrolling && <FaceEnroll onClose={() => setEnrolling(false)} onDone={async () => { await refresh(); setEnrolling(false); }} />}
+
       {mode && (
         <CaptureFlow
           title={mode === "in" ? "Check in" : "Check out"}
           confirmLabel={mode === "in" ? "Confirm check-in" : "Confirm check-out"}
           onClose={() => setMode(null)}
           onConfirm={submit}
+          face={faceOn && enrolled}
         />
       )}
     </>

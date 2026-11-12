@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { KeyRound, Pencil, Plus } from "lucide-react";
+import { KeyRound, Pencil, Plus, ScanFace } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 import type { Branch, Employee, Role, Shift, StaffType } from "../lib/types";
@@ -128,6 +128,13 @@ export function Employees() {
     setBusy(false);
   };
 
+  const resetFace = async (r: Employee) => {
+    if (!window.confirm(`Delete the registered face of ${r.full_name}? They will have to register again before their next check-in.`)) return;
+    const { error } = await supabase.rpc("reset_face", { p_employee: r.id });
+    if (error) window.alert(error.message);
+    await load();
+  };
+
   const edit = (r: Employee) => {
     setError("");
     setForm({
@@ -180,11 +187,21 @@ export function Employees() {
                     <td className="px-4 py-2 capitalize">{r.role}</td>
                     <td className="px-4 py-2 capitalize">{r.staff_type}</td>
                     <td className="px-4 py-2">{branchName(r.branch_id)}</td>
-                    <td className="px-4 py-2">{r.is_active ? <Badge tone="green">Active</Badge> : <Badge tone="red">Inactive</Badge>}</td>
+                    <td className="px-4 py-2">
+                      <span className="inline-flex flex-wrap gap-1">
+                        {r.is_active ? <Badge tone="green">Active</Badge> : <Badge tone="red">Inactive</Badge>}
+                        {r.face_enrolled_at ? <Badge tone="indigo">Face registered</Badge> : <Badge>No face</Badge>}
+                      </span>
+                    </td>
                     <td className="px-4 py-2 text-right">
                       <Button variant="ghost" onClick={() => edit(r)} aria-label={`Edit ${r.full_name}`}>
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      {r.face_enrolled_at && (
+                        <Button variant="ghost" onClick={() => resetFace(r)} aria-label={`Reset registered face for ${r.full_name}`} title="Reset registered face">
+                          <ScanFace className="h-4 w-4" />
+                        </Button>
+                      )}
                       {r.id !== me!.id && (
                         <Button variant="ghost" onClick={() => { setError(""); setNewPass(""); setReset(r); }} aria-label={`Reset password for ${r.full_name}`}>
                           <KeyRound className="h-4 w-4" />

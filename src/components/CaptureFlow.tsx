@@ -2,12 +2,15 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Camera, MapPin, RefreshCw } from "lucide-react";
 import { Button, ErrorText, Modal } from "./ui";
 import { errMsg, getPosition } from "../lib/utils";
+import { describeFace, loadFace } from "../lib/face";
 
 export interface Capture {
   blob: Blob;
   lat: number;
   lng: number;
   accuracy: number;
+  /** Face template of the selfie, when face check is on and the model loaded. */
+  descriptor?: number[];
 }
 
 /**
@@ -19,12 +22,15 @@ export function CaptureFlow({
   confirmLabel,
   onClose,
   onConfirm,
+  face = false,
   children,
 }: {
   title: string;
   confirmLabel: string;
   onClose: () => void;
   onConfirm: (c: Capture) => Promise<void>;
+  /** Require a detectable face in the selfie and return its template. */
+  face?: boolean;
   children?: ReactNode;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -34,7 +40,10 @@ export function CaptureFlow({
   const [pos, setPos] = useState<GeolocationPosition | null>(null);
   const [posError, setPosError] = useState("");
   const [locating, setLocating] = useState(false);
-  const [shot, setShot] = useState<{ blob: Blob; url: string } | null>(null);
+  const [shot, setShot] = useState<{ blob: Blob; url: string; descriptor?: number[] } | null>(null);
+  // "failed" means the model could not load: the punch still goes through, just unverified.
+  const [faceState, setFaceState] = useState<"off" | "loading" | "ready" | "failed">(face ? "loading" : "off");
+  const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -50,6 +59,11 @@ export function CaptureFlow({
   useEffect(() => {
     let cancelled = false;
     locate();
+    if (face) {
+      loadFace()
+        .then(() => !cancelled && setFaceState("ready"))
+        .catch(() => !cancelled && setFaceState("failed"));
+    }
     if (!navigator.mediaDevices?.getUserMedia) {
       setCamError("Camera is not available. Open this site over HTTPS (or localhost) in a modern browser.");
     } else {
@@ -76,7 +90,7 @@ export function CaptureFlow({
 
   useEffect(() => () => { if (shot) URL.revokeObjectURL(shot.url); }, [shot]);
 
-  const snap = () => {
+  const snap = async () => {
     const v = videoRef.current;
     if (!v || !v.videoWidth) return;
     const size = Math.min(v.videoWidth, v.videoHeight);
@@ -86,7 +100,19 @@ export function CaptureFlow({
     canvas.height = out;
     const ctx = canvas.getContext("2d")!;
     ctx.drawImage(v, (v.videoWidth - size) / 2, (v.videoHeight - size) / 2, size, size, 0, 0, out, out);
-    canvas.toBlob((blob) => blob && setShot({ blob, url: URL.createObjectURL(blob) }), "image/jpeg", 0.7);
+    setError("");
+    let descriptor: number[] | undefined;
+    if (faceState === "ready") {
+      setChecking(true);
+      const d = await describeFace(canvas).catch(() => null);
+      setChecking(false);
+      if (!d) {
+        setError("No face detected. Face the camera in good light and try again.");
+        return;
+      }
+      descriptor = d;
+    }
+    canvas.toBlob((blob) => blob && setShot({ blob, url: URL.createObjectURL(blob), descriptor }), "image/jpeg", 0.7);
   };
 
   const confirm = async () => {
@@ -94,7 +120,7 @@ export function CaptureFlow({
     setSaving(true);
     setError("");
     try {
-      await onConfirm({ blob: shot.blob, lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
+      await onConfirm({ blob: shot.blob, lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, descriptor: shot.descriptor });
     } catch (e) {
       setError(errMsg(e));
       setSaving(false);
@@ -146,8 +172,8 @@ export function CaptureFlow({
               </Button>
             </>
           ) : (
-            <Button className="w-full" onClick={snap} disabled={!camReady}>
-              <Camera className="h-4 w-4" /> Take selfie
+            <Button className="w-full" onClick={snap} loading={checking} disabled={!camReady || faceState === "loading"}>
+              <Camera className="h-4 w-4" /> {faceState === "loading" ? "Preparing face check…" : "Take selfie"}
             </Button>
           )}
         </div>
