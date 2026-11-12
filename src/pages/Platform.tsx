@@ -20,6 +20,7 @@ interface OrgRow {
   last_check_in: string | null;
   paid_total: number;
 }
+interface PlanReq { id: string; org_id: string; org_name: string; org_phone: string | null; current_plan: string; plan_id: string; note: string | null; requester_name: string | null; requester_email: string | null; created_at: string }
 interface Payment { id: string; plan_id: string; amount: number; paid_on: string; valid_until: string | null; reference: string | null; note: string | null }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -35,6 +36,7 @@ function StatusBadge({ o }: { o: OrgRow }) {
 export function Platform() {
   const [orgs, setOrgs] = useState<OrgRow[] | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [reqs, setReqs] = useState<PlanReq[]>([]);
   const [manage, setManage] = useState<OrgRow | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [form, setForm] = useState({ plan: "", status: "active", valid: "" });
@@ -48,6 +50,8 @@ export function Platform() {
     if (o.error) setError(o.error.message);
     setOrgs((o.data as OrgRow[]) ?? []);
     setPlans((p.data as Plan[]) ?? []);
+    const r = await supabase.rpc("admin_list_plan_requests");
+    setReqs((r.data as PlanReq[]) ?? []);
   }, []);
 
   useEffect(() => {
@@ -120,6 +124,26 @@ export function Platform() {
           </Card>
         ))}
       </div>
+
+      {reqs.length > 0 && (
+        <Card className="mb-5 border-amber-300">
+          <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">Plan change requests ({reqs.length})</h2>
+          <ul className="divide-y divide-slate-100">
+            {reqs.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <div className="min-w-48 flex-1">
+                  <p className="text-sm font-medium">{r.org_name}: {planName(r.current_plan)} → {planName(r.plan_id)}</p>
+                  <p className="text-xs text-slate-500">{r.requester_name} · {r.requester_email}{r.org_phone ? ` · ${r.org_phone}` : ""} · {fmtDate(r.created_at.slice(0, 10))}</p>
+                  {r.note && <p className="mt-0.5 text-xs text-slate-600">{r.note}</p>}
+                </div>
+                <Button variant="outline" onClick={() => { const o = orgs.find((x) => x.id === r.org_id); if (o) void openManage({ ...o, plan_id: r.plan_id }); }}>Review</Button>
+                <Button variant="ghost" disabled={busy} onClick={() => run(() => supabase.rpc("admin_close_plan_request", { p_id: r.id, p_status: "dismissed" }), () => undefined)}>Dismiss</Button>
+              </li>
+            ))}
+          </ul>
+          <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-500">Review opens the company with the requested plan selected. Saving the plan, or recording a payment, closes the request.</p>
+        </Card>
+      )}
 
       <Card className="mb-5">
         <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">Companies</h2>

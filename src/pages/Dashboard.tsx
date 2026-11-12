@@ -171,7 +171,9 @@ export function Dashboard() {
                           <Badge>No location</Badge>
                         ) : (
                           <>
-                            {a.check_in_in_geofence == null ? (
+                            {a.is_wfh ? (
+                              <Badge tone="indigo">Work from home</Badge>
+                            ) : a.check_in_in_geofence == null ? (
                               <Badge>Field</Badge>
                             ) : a.check_in_in_geofence ? (
                               <Badge tone="green">In zone · {fmtDistance(a.check_in_distance_m)}</Badge>

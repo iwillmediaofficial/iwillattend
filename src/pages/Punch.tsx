@@ -21,6 +21,7 @@ export function Punch() {
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"in" | "out" | null>(null);
   const [missed, setMissed] = useState<string | null>(null);
+  const [wfhToday, setWfhToday] = useState(false);
 
   const load = useCallback(async () => {
     // Latest record: today's, or an earlier one that was never checked out.
@@ -37,6 +38,8 @@ export function Punch() {
     const stillOpen = !!r && !r.check_out_at && !r.missing_checkout && Date.now() - Date.parse(r.check_in_at) < 18 * 3_600_000;
     setRow(r && (r.work_date === today || stillOpen) ? r : null);
     setMissed(r && r.work_date !== today && !r.check_out_at && !stillOpen ? r.work_date : null);
+    const { data: w } = await supabase.from("wfh_requests").select("id").eq("employee_id", employee!.id).eq("status", "approved").lte("from_date", today).gte("to_date", today).limit(1);
+    setWfhToday(!!w?.length);
     setLoading(false);
   }, [employee, today]);
 
@@ -88,7 +91,9 @@ export function Punch() {
             <Clock className="mx-auto mb-2 h-10 w-10 text-slate-300" />
             <p className="mb-1 text-lg font-semibold">Not checked in yet</p>
             <p className="mb-5 text-sm text-slate-500">
-              {isOffice
+              {isOffice && wfhToday
+                ? "Work from home is approved for today, so you can check in from anywhere."
+                : isOffice
                 ? branch
                   ? `You must be within ${branch.radius_m} m of ${branch.name}.`
                   : "No branch is assigned to you yet. Ask your admin."

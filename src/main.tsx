@@ -22,6 +22,8 @@ import { Payroll } from "./pages/Payroll";
 import { Payslips } from "./pages/Payslips";
 import { Landing } from "./pages/Landing";
 import { Platform } from "./pages/Platform";
+import { Plans } from "./pages/Plans";
+import { Wfh } from "./pages/Wfh";
 
 function Guard({ allow, children }: { allow: boolean; children: ReactNode }) {
   return allow ? <>{children}</> : <Navigate to="/punch" replace />;
@@ -68,6 +70,8 @@ function App() {
         <Route path="/muster" element={<Guard allow={isManager}><Muster /></Guard>} />
         <Route path="/settings" element={<Guard allow={isAdmin}><Settings /></Guard>} />
         <Route path="/payslips" element={<Payslips />} />
+        <Route path="/wfh" element={<Wfh />} />
+        <Route path="/plans" element={<Guard allow={isAdmin}><Plans /></Guard>} />
         <Route path="/platform" element={<Guard allow={isPlatformAdmin}><Platform /></Guard>} />
         <Route path="/payroll" element={<Guard allow={isAdmin}><Payroll /></Guard>} />
         <Route path="/visits" element={<Guard allow={employee.staff_type === "field"}><Visits /></Guard>} />

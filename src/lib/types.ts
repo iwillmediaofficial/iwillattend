@@ -7,6 +7,13 @@ export interface Organization {
   timezone: string;
   /** 0 = Sunday ... 6 = Saturday */
   weekly_offs: number[];
+  /** Which Saturdays of the month are off, for example [2, 4]. */
+  alt_saturday_offs: number[];
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  gstin: string | null;
   face_check_enabled: boolean;
   /** How a past day with no check-out is paid. */
   missing_checkout_as: "half_day" | "full_day" | "absent";
@@ -119,6 +126,8 @@ export interface Attendance {
   is_corrected: boolean;
   /** Set by the hourly job when a check-in was never checked out. */
   missing_checkout: boolean;
+  /** Checked in on an approved work-from-home day, so the office location rule was lifted. */
+  is_wfh: boolean;
   check_in_at: string;
   check_in_lat: number | null;
   check_in_lng: number | null;
@@ -186,4 +195,16 @@ export interface Subscription {
   valid_until: string | null;
   active_employees: number;
   is_platform_admin: boolean;
+}
+
+export interface WfhRequest {
+  id: string;
+  employee_id: string;
+  from_date: string;
+  to_date: string;
+  reason: string | null;
+  status: RequestStatus;
+  decision_note: string | null;
+  created_at: string;
+  employee?: EmployeeLite | null;
 }

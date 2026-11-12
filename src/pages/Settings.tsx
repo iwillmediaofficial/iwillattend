@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
@@ -25,6 +26,8 @@ export function Settings() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [pageError, setPageError] = useState("");
+  const [company, setCompany] = useState({ name: org!.name, phone: org!.phone ?? "", address: org!.address ?? "", city: org!.city ?? "", state: org!.state ?? "", gstin: org!.gstin ?? "" });
+  const [companySaved, setCompanySaved] = useState(false);
 
   const year = todayIn(org!.timezone).slice(0, 4);
 
@@ -42,6 +45,18 @@ export function Settings() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const toggleSaturday = (n: number) => {
+    const cur = org!.alt_saturday_offs ?? [];
+    return setOrgRule({ alt_saturday_offs: cur.includes(n) ? cur.filter((x) => x !== n) : [...cur, n].sort() });
+  };
+
+  const saveCompany = async (e: FormEvent) => {
+    e.preventDefault();
+    const txt = (v: string) => v.trim() || null;
+    await setOrgRule({ name: company.name.trim(), phone: txt(company.phone), address: txt(company.address), city: txt(company.city), state: txt(company.state), gstin: txt(company.gstin)?.toUpperCase() ?? null });
+    setCompanySaved(true);
+  };
 
   const toggleOff = async (d: number) => {
     setPageError("");
@@ -149,9 +164,29 @@ export function Settings() {
             {sub.active_employees} of {sub.max_employees} active employees used · Payroll {sub.payroll ? "included" : "not included"} · Face recognition {sub.face ? "included" : "not included"}
             {sub.valid_until ? ` · Valid until ${fmtDate(sub.valid_until)}` : ""}
           </p>
-          <p className="mt-1 text-xs text-slate-500">To change your plan, contact IWILL Attend support.</p>
+          <Link to="/plans" className="mt-2 inline-block text-sm font-medium text-indigo-600 hover:underline">View plans and request a change</Link>
         </Card>
       )}
+
+      <Card className="mb-5 p-4">
+        <h2 className="mb-3 text-sm font-semibold">Company details</h2>
+        <form onSubmit={saveCompany} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input label="Company name" required minLength={2} maxLength={120} disabled={!canEditOrg} value={company.name} onChange={(e) => { setCompanySaved(false); setCompany({ ...company, name: e.target.value }); }} />
+            <Input label="Contact phone" type="tel" maxLength={30} disabled={!canEditOrg} value={company.phone} onChange={(e) => { setCompanySaved(false); setCompany({ ...company, phone: e.target.value }); }} />
+            <Input label="City" maxLength={80} disabled={!canEditOrg} value={company.city} onChange={(e) => { setCompanySaved(false); setCompany({ ...company, city: e.target.value }); }} />
+            <Input label="State" maxLength={80} disabled={!canEditOrg} value={company.state} onChange={(e) => { setCompanySaved(false); setCompany({ ...company, state: e.target.value }); }} />
+            <Input label="Address" maxLength={300} disabled={!canEditOrg} value={company.address} onChange={(e) => { setCompanySaved(false); setCompany({ ...company, address: e.target.value }); }} />
+            <Input label="GSTIN" maxLength={20} disabled={!canEditOrg} value={company.gstin} onChange={(e) => { setCompanySaved(false); setCompany({ ...company, gstin: e.target.value }); }} />
+          </div>
+          {canEditOrg && (
+            <div className="flex items-center gap-3">
+              <Button type="submit" variant="outline">Save details</Button>
+              {companySaved && !pageError && <span className="text-sm text-emerald-600">Saved</span>}
+            </div>
+          )}
+        </form>
+      </Card>
 
       <Card className="mb-5">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
@@ -197,7 +232,19 @@ export function Settings() {
             );
           })}
         </div>
-        <p className="mt-2 text-xs text-slate-500">{canEditOrg ? "Highlighted days are not counted as absent or as leave." : "Only the owner or an admin can change weekly offs."}</p>
+        <p className="mb-2 mt-4 text-xs font-medium text-slate-700">Saturdays off (when Saturday is otherwise a working day)</p>
+        <div className="flex flex-wrap gap-2">
+          {["1st", "2nd", "3rd", "4th", "5th"].map((label, i) => {
+            const on = (org!.alt_saturday_offs ?? []).includes(i + 1);
+            return (
+              <button key={label} disabled={!canEditOrg || org!.weekly_offs.includes(6)} onClick={() => toggleSaturday(i + 1)} aria-pressed={on}
+                className={`rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 ${on ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 bg-white text-slate-600"}`}>
+                {label} Sat
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-slate-500">{canEditOrg ? "Highlighted days are not counted as absent or as leave. For 2nd and 4th Saturday off, select those two." : "Only the owner or an admin can change weekly offs."}</p>
       </Card>
 
       <Card className="mb-5 space-y-3 p-4">

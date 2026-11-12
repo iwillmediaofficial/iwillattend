@@ -20,7 +20,7 @@ type CountCode = (typeof COUNT_CODES)[number];
 
 export type MusterEmployee = Pick<Employee, "id" | "full_name" | "emp_code" | "joined_on" | "exit_on">;
 export type MusterAttendance = Pick<Attendance, "employee_id" | "work_date" | "status" | "check_out_at">;
-export type MusterRules = Pick<Organization, "weekly_offs" | "missing_checkout_as" | "sandwich_rule">;
+export type MusterRules = Pick<Organization, "weekly_offs" | "alt_saturday_offs" | "missing_checkout_as" | "sandwich_rule">;
 
 export interface MusterRow {
   employee: MusterEmployee;
@@ -40,6 +40,13 @@ export function monthDates(month: string): string[] {
 
 const dow = (d: string) => new Date(d + "T00:00:00Z").getUTCDay();
 const isOff = (c: DayCode) => c === "WO" || c === "H";
+
+/** Weekly off: a fixed weekday, or one of the chosen Saturdays of the month (1st to 5th). */
+export function isWeeklyOff(d: string, rules: Pick<Organization, "weekly_offs" | "alt_saturday_offs">): boolean {
+  const day = dow(d);
+  if (rules.weekly_offs.includes(day)) return true;
+  return day === 6 && (rules.alt_saturday_offs ?? []).includes(Math.floor((Number(d.slice(8)) - 1) / 7) + 1);
+}
 
 export function buildMuster(
   month: string,
@@ -65,7 +72,7 @@ export function buildMuster(
       if (d > today) return "";
       if (d < employee.joined_on || (employee.exit_on && d > employee.exit_on)) return "-";
       const a = att.get(employee.id + d);
-      const off = hol.has(d) || rules.weekly_offs.includes(dow(d));
+      const off = hol.has(d) || isWeeklyOff(d, rules);
       const leave = off ? undefined : mine.find((l) => l.from_date <= d && l.to_date >= d);
       const paidHalfLeave = leave?.half_day && leave.leave_type?.is_paid ? 0.5 : 0;
 

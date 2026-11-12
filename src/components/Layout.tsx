@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Building2, CalendarClock, ClipboardCheck, FileBarChart, Fingerprint, Globe, IndianRupee, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCheck, CreditCard, FileBarChart, Fingerprint, Globe, House, IndianRupee, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import type { Subscription } from "../lib/types";
 import { addDays, fmtDate, todayIn } from "../lib/utils";
@@ -16,7 +16,7 @@ function subscriptionNotice(sub: Subscription | null, isAdmin: boolean, tz: stri
     return { text: `${sub.active_employees} employees are active but the ${sub.plan_name} plan allows ${sub.max_employees}. Attendance will pause on ${fmtDate(pauseOn)} unless you upgrade or deactivate staff.`, danger: true };
   }
   if (sub.sub_status === "trial" && sub.valid_until) {
-    if (sub.valid_until < today) return { text: `Your free trial has ended. You are now on the Free plan: up to ${sub.max_employees} employees, without payroll or face recognition. Contact us to upgrade.`, danger: false };
+    if (sub.valid_until < today) return { text: `Your free trial has ended. You are now on the Free plan: up to ${sub.max_employees} employees, without payroll or face recognition. Open Plans to request an upgrade.`, danger: false };
     const days = Math.round((Date.parse(sub.valid_until) - Date.parse(today)) / 86_400_000);
     return { text: `Free trial of ${sub.plan_name}: ${days === 0 ? "ends today" : `${days} day${days === 1 ? "" : "s"} left`}.`, danger: false };
   }
@@ -33,6 +33,7 @@ export function Layout() {
     { to: "/visits", label: "Visits", icon: MapPinned, show: employee?.staff_type === "field" },
     { to: "/history", label: "History", icon: CalendarClock, show: true },
     { to: "/leave", label: "Leave", icon: Palmtree, show: true },
+    { to: "/wfh", label: "WFH", icon: House, show: true },
     { to: "/payslips", label: "Payslips", icon: ReceiptText, show: true },
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: isManager },
     { to: "/approvals", label: "Approvals", icon: ClipboardCheck, show: isManager },
@@ -42,6 +43,7 @@ export function Layout() {
     { to: "/employees", label: "Employees", icon: Users, show: isAdmin },
     { to: "/branches", label: "Branches", icon: Building2, show: isAdmin },
     { to: "/settings", label: "Settings", icon: SettingsIcon, show: isAdmin },
+    { to: "/plans", label: "Plans", icon: CreditCard, show: isAdmin },
     { to: "/platform", label: "Platform", icon: Globe, show: isPlatformAdmin },
   ].filter((i) => i.show);
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
-import type { CorrectionRequest, LeaveRequest } from "../lib/types";
+import type { CorrectionRequest, LeaveRequest, WfhRequest } from "../lib/types";
 import { Button, Card, Empty, ErrorText, PageHeader, Spinner } from "../components/ui";
 import { RequestBadge } from "../components/badges";
 import { addDays, errMsg, fmtDate, fmtTime, todayIn } from "../lib/utils";
@@ -14,6 +14,7 @@ export function Approvals() {
   const tz = org!.timezone;
   const [leaves, setLeaves] = useState<LeaveRequest[] | null>(null);
   const [corrs, setCorrs] = useState<CorrectionRequest[]>([]);
+  const [wfhs, setWfhs] = useState<WfhRequest[]>([]);
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
 
@@ -26,13 +27,15 @@ export function Approvals() {
     if (l.error || c.error) setError((l.error ?? c.error)!.message);
     setLeaves((l.data as unknown as LeaveRequest[]) ?? []);
     setCorrs((c.data as unknown as CorrectionRequest[]) ?? []);
+    const w = await supabase.from("wfh_requests").select(`*, ${EMP}`).neq("status", "cancelled").gte("created_at", since).order("created_at", { ascending: false });
+    setWfhs((w.data as unknown as WfhRequest[]) ?? []);
   }, [tz]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const decide = async (kind: "leave" | "correction", id: string, approve: boolean) => {
+  const decide = async (kind: "leave" | "correction" | "wfh", id: string, approve: boolean) => {
     let note = "";
     if (!approve) {
       const input = window.prompt("Reason for rejecting (optional):", "");
@@ -41,7 +44,7 @@ export function Approvals() {
     }
     setBusyId(id);
     setError("");
-    const { error } = await supabase.rpc(kind === "leave" ? "decide_leave" : "decide_correction", { p_id: id, p_approve: approve, p_note: note });
+    const { error } = await supabase.rpc(({ leave: "decide_leave", correction: "decide_correction", wfh: "decide_wfh" } as const)[kind], { p_id: id, p_approve: approve, p_note: note });
     if (error) setError(errMsg(error));
     setBusyId("");
     await load();
@@ -61,7 +64,7 @@ export function Approvals() {
   if (!leaves) return <Spinner />;
 
   const canDecide = (employeeId: string) => employeeId !== me!.id || me!.role === "owner";
-  const actions = (kind: "leave" | "correction", r: { id: string; status: string; employee_id: string }) =>
+  const actions = (kind: "leave" | "correction" | "wfh", r: { id: string; status: string; employee_id: string }) =>
     r.status !== "pending" ? (
       <RequestBadge status={r.status as LeaveRequest["status"]} />
     ) : canDecide(r.employee_id) ? (
@@ -74,7 +77,7 @@ export function Approvals() {
     );
 
   const pendingFirst = <T extends { status: string }>(xs: T[]) => [...xs.filter((x) => x.status === "pending"), ...xs.filter((x) => x.status !== "pending")];
-  const pendingCount = leaves.filter((x) => x.status === "pending").length + corrs.filter((x) => x.status === "pending").length;
+  const pendingCount = leaves.filter((x) => x.status === "pending").length + corrs.filter((x) => x.status === "pending").length + wfhs.filter((x) => x.status === "pending").length;
 
   return (
     <>
@@ -100,6 +103,28 @@ export function Approvals() {
                 {r.status === "approved" && canDecide(r.employee_id) && (
                   <Button variant="ghost" disabled={busyId === r.id} onClick={() => revoke(r.id)}>Revoke</Button>
                 )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card className="mb-5">
+        <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">Work from home</h2>
+        {wfhs.length === 0 ? (
+          <Empty>No work-from-home requests.</Empty>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {pendingFirst(wfhs).map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <div className="min-w-48 flex-1">
+                  <p className="text-sm font-medium">{r.employee?.full_name}</p>
+                  <p className="text-xs text-slate-500">
+                    {fmtDate(r.from_date)}{r.to_date !== r.from_date ? ` to ${fmtDate(r.to_date)}` : ""}
+                  </p>
+                  {r.reason && <p className="mt-0.5 text-xs text-slate-600">{r.reason}</p>}
+                </div>
+                {actions("wfh", r)}
               </li>
             ))}
           </ul>
