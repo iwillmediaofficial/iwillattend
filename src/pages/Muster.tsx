@@ -35,7 +35,7 @@ export function Muster() {
     Promise.all([
       // Active staff, plus anyone whose last working day falls in or after this month.
       supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on").or(`is_active.eq.true,exit_on.gte.${first}`).lte("joined_on", last).order("full_name"),
-      fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at").gte("work_date", first).lte("work_date", last).order("id")),
+      fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value").gte("work_date", first).lte("work_date", last).order("id")),
       supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
       supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),
     ]).then(([e, a, l, h]) => {
@@ -155,7 +155,7 @@ export function Muster() {
         )}
       </Card>
       <p className="mt-2 text-xs text-slate-500">
-        Payable days = present + late + paid leave + weekly offs + holidays, with a half day counted as 0.5. A missing check-out is paid as set in Settings. {org!.sandwich_rule ? "Off days between unpaid absences are not paid (sandwich rule). " : ""}A dash means the day is before joining or after the last working day. Today stays blank until someone checks in.
+        Payable days = present + late + paid leave + weekly offs + holidays, with a half day counted as 0.5 and short hours counted by your day rules in Settings. A missing check-out is paid as set in Settings. {org!.sandwich_rule ? "Off days between unpaid absences are not paid (sandwich rule). " : ""}A dash means the day is before joining or after the last working day. Today stays blank until someone checks in.
       </p>
     </>
   );

@@ -67,7 +67,7 @@ export function Reports() {
   const exportCsv = () => {
     if (!rows) return;
     downloadCsv(`attendance_${from}_to_${to}.csv`, [
-      ["Date", "Employee", "Code", "Staff type", "Status", "Late minutes", "Corrected", "Face at check-in", "Face at check-out", "Failed face attempts", "Check in", "Check out", "Hours", "In geofence", "Distance from branch (m)", "Check-in latitude", "Check-in longitude"],
+      ["Date", "Employee", "Code", "Staff type", "Status", "Day value", "Late minutes", "Corrected", "Face at check-in", "Face at check-out", "Failed face attempts", "Check in", "Check out", "Hours", "In geofence", "Distance from branch (m)", "Check-in latitude", "Check-in longitude"],
       ...rows.map((r) => {
         const h = hoursBetween(r.check_in_at, r.check_out_at);
         return [
@@ -75,7 +75,8 @@ export function Reports() {
           r.employee?.full_name,
           r.employee?.emp_code,
           r.employee?.staff_type,
-          r.status === "half_day" ? "Half day" : r.status === "late" ? "Late" : "Present",
+          r.status === "half_day" ? "Half day" : r.status === "short" ? "Short hours" : r.status === "late" ? "Late" : "Present",
+          r.day_value,
           r.late_minutes,
           r.is_corrected ? "Yes" : "No",
           faceText(r.check_in_face_match, r.face_required),

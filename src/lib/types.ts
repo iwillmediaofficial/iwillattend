@@ -21,6 +21,12 @@ export interface Organization {
   sandwich_rule: boolean;
   /** Office check-in is refused when the phone's location is less accurate than this many metres. */
   max_accuracy_m: number;
+  /** Hours needed for a full day and a half day, and what happens in the gaps. */
+  full_day_hours: number;
+  half_day_hours: number;
+  below_half_rule: "absent" | "hours" | "half";
+  between_rule: "half" | "hours";
+  full_day_tolerance_min: number;
 }
 
 export interface Shift {
@@ -112,7 +118,8 @@ export interface Employee {
   is_active: boolean;
 }
 
-export type DayStatus = "present" | "late" | "half_day";
+/** short = worked less than a full day and valued by the company's rules (see day_value). */
+export type DayStatus = "present" | "late" | "half_day" | "short";
 
 export interface Attendance {
   id: string;
@@ -128,6 +135,10 @@ export interface Attendance {
   missing_checkout: boolean;
   /** Checked in on an approved work-from-home day, so the office location rule was lifted. */
   is_wfh: boolean;
+  /** Minutes between check-in and check-out; null while the day is open. */
+  worked_minutes: number | null;
+  /** What the day is worth for pay, 0 to 1, fixed at check-out by the rules then in force. */
+  day_value: number | null;
   check_in_at: string;
   check_in_lat: number | null;
   check_in_lng: number | null;

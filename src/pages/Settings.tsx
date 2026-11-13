@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import type { Holiday, LeaveType, Shift } from "../lib/types";
 import { Badge, Button, Card, Empty, ErrorText, Input, Modal, PageHeader, Select, Spinner } from "../components/ui";
 import { fmtDate, todayIn } from "../lib/utils";
+import { DayRulesCard } from "../components/DayRulesCard";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const hhmm = (t: string) => t.slice(0, 5);
@@ -206,7 +207,7 @@ export function Settings() {
                     {s.name} {s.is_default && <Badge tone="indigo">Default</Badge>} {!s.is_active && <Badge tone="red">Inactive</Badge>}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {hhmm(s.start_time)} to {hhmm(s.end_time)} · late after {s.grace_minutes} min · half day under {Number(s.half_day_under_hours)} h worked
+                    {hhmm(s.start_time)} to {hhmm(s.end_time)} · late after {s.grace_minutes} min
                   </p>
                 </div>
                 <Button variant="ghost" aria-label={`Edit ${s.name}`} onClick={() => { setError(""); setShiftForm({ id: s.id, name: s.name, start_time: hhmm(s.start_time), end_time: hhmm(s.end_time), grace_minutes: String(s.grace_minutes), half_day_under_hours: String(Number(s.half_day_under_hours)), is_default: s.is_default, is_active: s.is_active }); }}>
@@ -246,6 +247,8 @@ export function Settings() {
         </div>
         <p className="mt-2 text-xs text-slate-500">{canEditOrg ? "Highlighted days are not counted as absent or as leave. For 2nd and 4th Saturday off, select those two." : "Only the owner or an admin can change weekly offs."}</p>
       </Card>
+
+      <DayRulesCard canEdit={canEditOrg} />
 
       <Card className="mb-5 space-y-3 p-4">
         <h2 className="text-sm font-semibold">Attendance pay rules</h2>
@@ -327,7 +330,6 @@ export function Settings() {
               <Input label="Start time" type="time" required value={shiftForm.start_time} onChange={(e) => setShiftForm({ ...shiftForm, start_time: e.target.value })} />
               <Input label="End time" type="time" required value={shiftForm.end_time} onChange={(e) => setShiftForm({ ...shiftForm, end_time: e.target.value })} />
               <Input label="Grace (minutes)" type="number" min={0} max={180} required hint="Late only after this many minutes." value={shiftForm.grace_minutes} onChange={(e) => setShiftForm({ ...shiftForm, grace_minutes: e.target.value })} />
-              <Input label="Half day under (hours)" type="number" min={0} max={24} step="0.5" required hint="Fewer worked hours than this is a half day." value={shiftForm.half_day_under_hours} onChange={(e) => setShiftForm({ ...shiftForm, half_day_under_hours: e.target.value })} />
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={shiftForm.is_default} disabled={!!shiftForm.id && !!shifts.find((s) => s.id === shiftForm.id)?.is_default} onChange={(e) => setShiftForm({ ...shiftForm, is_default: e.target.checked })} /> Default shift for the company

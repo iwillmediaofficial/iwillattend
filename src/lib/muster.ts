@@ -1,12 +1,13 @@
 import type { Attendance, Employee, Holiday, LeaveRequest, Organization } from "./types";
 
 /** One cell of the monthly attendance sheet. */
-export type DayCode = "P" | "L" | "HD" | "MC" | "LV" | "LOP" | "A" | "WO" | "H" | "-" | "";
+export type DayCode = "P" | "L" | "HD" | "SH" | "MC" | "LV" | "LOP" | "A" | "WO" | "H" | "-" | "";
 
 export const DAY_CODES: { code: DayCode; label: string; cls: string }[] = [
   { code: "P", label: "Present", cls: "bg-emerald-50 text-emerald-700" },
   { code: "L", label: "Late", cls: "bg-amber-50 text-amber-700" },
   { code: "HD", label: "Half day", cls: "bg-orange-50 text-orange-700" },
+  { code: "SH", label: "Short hours", cls: "bg-fuchsia-50 text-fuchsia-700" },
   { code: "MC", label: "Missing check-out", cls: "bg-yellow-100 text-yellow-800" },
   { code: "LV", label: "Paid leave", cls: "bg-indigo-50 text-indigo-700" },
   { code: "LOP", label: "Unpaid leave", cls: "bg-purple-50 text-purple-700" },
@@ -15,11 +16,11 @@ export const DAY_CODES: { code: DayCode; label: string; cls: string }[] = [
   { code: "H", label: "Holiday", cls: "bg-sky-50 text-sky-700" },
 ];
 
-export const COUNT_CODES = ["P", "L", "HD", "MC", "LV", "LOP", "A", "WO", "H"] as const;
+export const COUNT_CODES = ["P", "L", "HD", "SH", "MC", "LV", "LOP", "A", "WO", "H"] as const;
 type CountCode = (typeof COUNT_CODES)[number];
 
 export type MusterEmployee = Pick<Employee, "id" | "full_name" | "emp_code" | "joined_on" | "exit_on">;
-export type MusterAttendance = Pick<Attendance, "employee_id" | "work_date" | "status" | "check_out_at">;
+export type MusterAttendance = Pick<Attendance, "employee_id" | "work_date" | "status" | "check_out_at" | "day_value">;
 export type MusterRules = Pick<Organization, "weekly_offs" | "alt_saturday_offs" | "missing_checkout_as" | "sandwich_rule">;
 
 export interface MusterRow {
@@ -83,8 +84,13 @@ export function buildMuster(
           return "MC";
         }
         if (a.status === "half_day") {
-          pay[i] = 0.5 + paidHalfLeave;
+          pay[i] = Math.min(1, 0.5 + paidHalfLeave);
           return "HD";
+        }
+        if (a.status === "short") {
+          // Worked less than a full day: paid whatever the company's rule gave the day at check-out.
+          pay[i] = Math.min(1, Number(a.day_value ?? 0) + paidHalfLeave);
+          return "SH";
         }
         pay[i] = 1;
         return a.status === "late" ? "L" : "P";
@@ -111,7 +117,7 @@ export function buildMuster(
     if (rules.sandwich_rule) {
       const isWorking = (c: DayCode) => c !== "" && c !== "-" && !isOff(c);
       const anyPaidWork = days.some((c, i) => isWorking(c) && pay[i] > 0);
-      const unpaidAbsence = (i: number) => (days[i] === "A" || days[i] === "LOP" || days[i] === "MC") && pay[i] === 0;
+      const unpaidAbsence = (i: number) => (days[i] === "A" || days[i] === "LOP" || days[i] === "MC" || days[i] === "SH") && pay[i] === 0;
       for (let i = 0; i < days.length; i++) {
         if (!isOff(days[i])) continue;
         let j = i;
@@ -131,8 +137,8 @@ export function buildMuster(
       }
     }
 
-    const counts = { P: 0, L: 0, HD: 0, MC: 0, LV: 0, LOP: 0, A: 0, WO: 0, H: 0 };
+    const counts = { P: 0, L: 0, HD: 0, SH: 0, MC: 0, LV: 0, LOP: 0, A: 0, WO: 0, H: 0 };
     for (const c of days) if (c !== "" && c !== "-") counts[c] += 1;
-    return { employee, days, counts, unpaidOff, payable: pay.reduce((s, v) => s + v, 0) };
+    return { employee, days, counts, unpaidOff, payable: Math.round(pay.reduce((s, v) => s + v, 0) * 1000) / 1000 };
   });
 }

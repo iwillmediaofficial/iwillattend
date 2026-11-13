@@ -159,7 +159,7 @@ export async function loadMuster(month: string, today: string, rules: MusterRule
   const first = dates[0];
   const last = dates[dates.length - 1];
   const [attendance, l, h] = await Promise.all([
-    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at").gte("work_date", first).lte("work_date", last).order("id")),
+    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value").gte("work_date", first).lte("work_date", last).order("id")),
     supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
     supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),
   ]);

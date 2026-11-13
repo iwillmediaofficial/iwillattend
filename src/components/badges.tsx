@@ -1,13 +1,16 @@
 import type { Attendance, RequestStatus } from "../lib/types";
 import { Badge } from "./ui";
+import { describeDayValue } from "../lib/dayRule";
 
-export function AttendanceStatus({ row }: { row: Pick<Attendance, "status" | "late_minutes" | "is_corrected" | "missing_checkout"> }) {
+export function AttendanceStatus({ row }: { row: Pick<Attendance, "status" | "late_minutes" | "is_corrected" | "missing_checkout" | "day_value"> }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       {row.status === "late" ? (
         <Badge tone="amber">Late {row.late_minutes} min</Badge>
       ) : row.status === "half_day" ? (
         <Badge tone="amber">Half day</Badge>
+      ) : row.status === "short" ? (
+        <Badge tone={Number(row.day_value) === 0 ? "red" : "amber"}>Short hours: {describeDayValue(row.day_value)}</Badge>
       ) : (
         <Badge tone="green">On time</Badge>
       )}
