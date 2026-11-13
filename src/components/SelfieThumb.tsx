@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { User } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import { selfieUrl } from "../lib/utils";
 
-/** Shows a private selfie through a short-lived signed URL. Click to enlarge. */
+/** Shows a private selfie, fetched with the signed-in user's access. Click to enlarge. */
 export function SelfieThumb({ path, size = 40 }: { path: string | null | undefined; size?: number }) {
   const [url, setUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -10,12 +10,7 @@ export function SelfieThumb({ path, size = 40 }: { path: string | null | undefin
   useEffect(() => {
     let alive = true;
     setUrl(null);
-    if (path) {
-      supabase.storage
-        .from("selfies")
-        .createSignedUrl(path, 3600)
-        .then(({ data }) => alive && setUrl(data?.signedUrl ?? null));
-    }
+    if (path) void selfieUrl(path).then((u) => alive && setUrl(u));
     return () => {
       alive = false;
     };

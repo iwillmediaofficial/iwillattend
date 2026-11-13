@@ -67,9 +67,65 @@ export function getPosition(): Promise<GeolocationPosition> {
 /** Upload a selfie into the caller's own folder and return its storage path. */
 export async function uploadSelfie(orgId: string, employeeId: string, kind: "in" | "out" | "visit", blob: Blob): Promise<string> {
   const path = `${orgId}/${employeeId}/${new Date().toISOString().slice(0, 10)}-${kind}-${crypto.randomUUID()}.jpg`;
+  if (MEDIA_URL) {
+    const res = await fetch(`${MEDIA_URL}/${path}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "image/jpeg" },
+      body: blob,
+    }).catch(() => null);
+    if (!res) throw new Error("Selfie upload failed: no connection to the media service. Check your internet and try again.");
+    if (!res.ok) throw new Error("Selfie upload failed: " + (await mediaError(res)));
+    return path;
+  }
   const { error } = await supabase.storage.from("selfies").upload(path, blob, { contentType: "image/jpeg" });
   if (error) throw new Error("Selfie upload failed: " + error.message);
   return path;
+}
+
+/** Address of the Cloudflare media Worker (R2). Empty = selfies stay in Supabase Storage. */
+const MEDIA_URL = ((import.meta.env.VITE_MEDIA_URL as string | undefined) ?? "").trim().replace(/\/+$/, "");
+
+async function accessToken(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) throw new Error("Your session has expired. Sign in again.");
+  return data.session.access_token;
+}
+
+async function mediaError(res: Response): Promise<string> {
+  try {
+    return ((await res.json()) as { message?: string }).message ?? `error ${res.status}`;
+  } catch {
+    return `error ${res.status}`;
+  }
+}
+
+const selfieUrls = new Map<string, Promise<string | null>>();
+
+async function loadSelfieUrl(path: string): Promise<string | null> {
+  if (MEDIA_URL) {
+    try {
+      const res = await fetch(`${MEDIA_URL}/${path}`, { headers: { Authorization: `Bearer ${await accessToken()}` } });
+      if (res.ok) return URL.createObjectURL(await res.blob());
+      if (res.status !== 404) return null;
+    } catch {
+      return null;
+    }
+  }
+  // Not in R2: a selfie from before the move, still in Supabase Storage.
+  const { data } = await supabase.storage.from("selfies").createSignedUrl(path, 3600);
+  return data?.signedUrl ?? null;
+}
+
+/** A URL an <img> can show for a private selfie. Remembered for 50 minutes, so a selfie is fetched once per screen visit. */
+export function selfieUrl(path: string): Promise<string | null> {
+  let hit = selfieUrls.get(path);
+  if (!hit) {
+    hit = loadSelfieUrl(path);
+    selfieUrls.set(path, hit);
+    const forget = () => selfieUrls.get(path) === hit && selfieUrls.delete(path);
+    void hit.then((url) => (url ? window.setTimeout(forget, 50 * 60_000) : forget()));
+  }
+  return hit;
 }
 
 export function downloadCsv(filename: string, rows: (string | number | null | undefined)[][]): void {

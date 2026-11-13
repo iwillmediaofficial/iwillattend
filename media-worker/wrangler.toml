@@ -1,0 +1,17 @@
+# IWILL Attend media Worker. Deploy from this folder with: npx wrangler deploy
+name = "iwill-attend-media"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+# Private bucket that holds the selfies. Create once: npx wrangler r2 bucket create iwill-attend-selfies
+[[r2_buckets]]
+binding = "SELFIES"
+bucket_name = "iwill-attend-selfies"
+
+[vars]
+SUPABASE_URL = "https://khipkizdwhyiqjkleici.supabase.co"
+
+# Two secrets are set separately and never stored in this file:
+#   npx wrangler secret put SUPABASE_KEY   (the Supabase publishable key)
+#   npx wrangler secret put MEDIA_SECRET   (same value as 'media_secret' in the database)
+# For local runs (npx wrangler dev) put both in media-worker/.dev.vars, which git ignores.
