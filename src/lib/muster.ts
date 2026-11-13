@@ -20,7 +20,7 @@ export const COUNT_CODES = ["P", "L", "HD", "SH", "MC", "LV", "LOP", "A", "WO", 
 type CountCode = (typeof COUNT_CODES)[number];
 
 export type MusterEmployee = Pick<Employee, "id" | "full_name" | "emp_code" | "joined_on" | "exit_on">;
-export type MusterAttendance = Pick<Attendance, "employee_id" | "work_date" | "status" | "check_out_at" | "day_value">;
+export type MusterAttendance = Pick<Attendance, "employee_id" | "work_date" | "status" | "check_out_at" | "day_value" | "ot_minutes" | "ot_status">;
 export type MusterRules = Pick<Organization, "weekly_offs" | "alt_saturday_offs" | "missing_checkout_as" | "sandwich_rule">;
 
 export interface MusterRow {
@@ -31,6 +31,10 @@ export interface MusterRow {
   unpaidOff: number;
   /** Days that count towards pay. */
   payable: number;
+  /** Overtime minutes that will be paid (approved, or automatic when approval is off). */
+  otMinutes: number;
+  /** Overtime minutes still waiting for a manager's decision. */
+  otPendingMinutes: number;
 }
 
 export function monthDates(month: string): string[] {
@@ -67,6 +71,8 @@ export function buildMuster(
   return employees.map((employee) => {
     const mine = approved.filter((l) => l.employee_id === employee.id);
     const pay: number[] = [];
+    let otMinutes = 0;
+    let otPendingMinutes = 0;
 
     const days = dates.map<DayCode>((d, i) => {
       pay[i] = 0;
@@ -78,6 +84,8 @@ export function buildMuster(
       const paidHalfLeave = leave?.half_day && leave.leave_type?.is_paid ? 0.5 : 0;
 
       if (a) {
+        if (a.ot_status === "approved" || a.ot_status === "auto") otMinutes += a.ot_minutes ?? 0;
+        else if (a.ot_status === "pending") otPendingMinutes += a.ot_minutes ?? 0;
         // A past day that was never checked out is paid by the company's "missing check-out" rule.
         if (!a.check_out_at && d < today) {
           pay[i] = Math.min(1, mcPay + paidHalfLeave);
@@ -139,6 +147,6 @@ export function buildMuster(
 
     const counts = { P: 0, L: 0, HD: 0, SH: 0, MC: 0, LV: 0, LOP: 0, A: 0, WO: 0, H: 0 };
     for (const c of days) if (c !== "" && c !== "-") counts[c] += 1;
-    return { employee, days, counts, unpaidOff, payable: Math.round(pay.reduce((s, v) => s + v, 0) * 1000) / 1000 };
+    return { employee, days, counts, unpaidOff, otMinutes, otPendingMinutes, payable: Math.round(pay.reduce((s, v) => s + v, 0) * 1000) / 1000 };
   });
 }

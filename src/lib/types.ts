@@ -27,6 +27,16 @@ export interface Organization {
   below_half_rule: "absent" | "hours" | "half";
   between_rule: "half" | "hours";
   full_day_tolerance_min: number;
+  /** Overtime: company-wide rule. Employees can override it on their salary record. */
+  ot_enabled: boolean;
+  ot_mode: "multiplier" | "fixed";
+  ot_multiplier: number;
+  ot_fixed_rate: number;
+  ot_min_minutes: number;
+  ot_round_minutes: number;
+  ot_max_minutes: number;
+  ot_requires_approval: boolean;
+  ot_off_days: boolean;
 }
 
 export interface Shift {
@@ -139,6 +149,9 @@ export interface Attendance {
   worked_minutes: number | null;
   /** What the day is worth for pay, 0 to 1, fixed at check-out by the rules then in force. */
   day_value: number | null;
+  /** Overtime minutes worked out at check-out; paid only when approved or automatic. */
+  ot_minutes: number;
+  ot_status: "pending" | "approved" | "rejected" | "auto" | null;
   check_in_at: string;
   check_in_lat: number | null;
   check_in_lng: number | null;

@@ -35,6 +35,7 @@ export function PayslipView({ slip, orgName, month, draft, onClose }: { slip: Pa
             <Line label="HRA" value={slip.hra} />
             <Line label="Allowances" value={slip.allowances} />
             {Number(slip.bonus) > 0 && <Line label="Bonus / incentive" value={slip.bonus} />}
+            {Number(slip.ot_pay) > 0 && <Line label={`Overtime (${Number(slip.ot_hours)} h)`} value={slip.ot_pay} />}
             <Line label="Gross earnings" value={slip.gross} bold />
           </div>
           <div>

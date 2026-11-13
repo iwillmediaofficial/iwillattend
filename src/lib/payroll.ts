@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { buildMuster, monthDates, type MusterAttendance, type MusterEmployee, type MusterRow, type MusterRules } from "./muster";
-import type { Holiday, LeaveRequest } from "./types";
+import type { Holiday, LeaveRequest, Organization } from "./types";
 import { fetchAll } from "./utils";
 
 export interface PayrollSettings {
@@ -41,6 +41,29 @@ export interface SalaryStructure {
   ifsc: string | null;
   pan: string | null;
   uan: string | null;
+  /** company = follow the company's overtime rule; none = this employee is not paid overtime. */
+  ot_mode: "company" | "multiplier" | "fixed" | "none";
+  ot_multiplier: number | null;
+  ot_fixed_rate: number | null;
+}
+
+export type OtRules = Pick<Organization, "ot_enabled" | "ot_mode" | "ot_multiplier" | "ot_fixed_rate" | "full_day_hours">;
+
+/** Overtime pay for the month: the employee's own rule if they have one, otherwise the company's. */
+export function overtimePay(otMinutes: number, st: SalaryStructure, s: PayrollSettings, org: OtRules | undefined, daysInMonth: number): { ot_hours: number; ot_pay: number } {
+  const mode = st.ot_mode ?? "company";
+  if (!org?.ot_enabled || mode === "none" || !(otMinutes > 0)) return { ot_hours: 0, ot_pay: 0 };
+  const hours = otMinutes / 60;
+  const useFixed = mode === "fixed" || (mode === "company" && org.ot_mode === "fixed");
+  let pay: number;
+  if (useFixed) {
+    pay = hours * n(mode === "fixed" ? st.ot_fixed_rate : org.ot_fixed_rate);
+  } else {
+    const basis = s.pay_days_basis === "calendar" ? daysInMonth : Number(s.pay_days_basis);
+    const hourly = (n(st.basic) + n(st.hra) + n(st.allowances)) / (basis * n(org.full_day_hours));
+    pay = hours * hourly * n(mode === "multiplier" ? st.ot_multiplier : org.ot_multiplier);
+  }
+  return { ot_hours: r2(hours), ot_pay: Math.round(pay) };
 }
 
 export interface PayrollRun {
@@ -59,6 +82,8 @@ export interface SlipNumbers {
   hra: number;
   allowances: number;
   bonus: number;
+  ot_hours: number;
+  ot_pay: number;
   gross: number;
   pf_employee: number;
   esi_employee: number;
@@ -97,8 +122,9 @@ export function totals(
   s: PayrollSettings,
   /** TDS for this month, already scaled to the days paid. */
   tds: number,
+  otPay = 0,
 ) {
-  const gross = r2(earned.basic + earned.hra + earned.allowances + bonus);
+  const gross = r2(earned.basic + earned.hra + earned.allowances + bonus + otPay);
   let pf_employee = 0, pf_employer = 0, esi_employee = 0, esi_employer = 0;
   if (s.pf_enabled && st.pf_applicable) {
     const wage = Math.min(earned.basic, n(s.pf_wage_ceiling));
@@ -115,7 +141,7 @@ export function totals(
   return { gross, pf_employee, pf_employer, esi_employee, esi_employer, pt, tds, total_deductions, net_pay: r2(gross - total_deductions) };
 }
 
-export function computeSlip(st: SalaryStructure, s: PayrollSettings, row: MusterRow, bonus = 0, otherDeduction = 0): SlipNumbers {
+export function computeSlip(st: SalaryStructure, s: PayrollSettings, row: MusterRow, bonus = 0, otherDeduction = 0, org?: OtRules): SlipNumbers {
   const dim = row.days.length;
   const counted = row.days.filter((c) => c !== "-" && c !== "").length;
   const joinedMidMonth = row.days.includes("-");
@@ -140,6 +166,7 @@ export function computeSlip(st: SalaryStructure, s: PayrollSettings, row: Muster
     hra: Math.round(n(st.hra) * factor),
     allowances: Math.round(n(st.allowances) * factor),
   };
+  const ot = overtimePay(row.otMinutes ?? 0, st, s, org, dim);
   return {
     days_in_month: dim,
     paid_days: r2(paid_days),
@@ -149,7 +176,8 @@ export function computeSlip(st: SalaryStructure, s: PayrollSettings, row: Muster
     ...earned,
     bonus,
     other_deduction: otherDeduction,
-    ...totals(earned, bonus, otherDeduction, st, s, Math.round(n(st.tds_monthly) * factor)),
+    ...ot,
+    ...totals(earned, bonus, otherDeduction, st, s, Math.round(n(st.tds_monthly) * factor), ot.ot_pay),
   };
 }
 
@@ -159,7 +187,7 @@ export async function loadMuster(month: string, today: string, rules: MusterRule
   const first = dates[0];
   const last = dates[dates.length - 1];
   const [attendance, l, h] = await Promise.all([
-    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value").gte("work_date", first).lte("work_date", last).order("id")),
+    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value, ot_minutes, ot_status").gte("work_date", first).lte("work_date", last).order("id")),
     supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
     supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),
   ]);

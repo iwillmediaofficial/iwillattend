@@ -7,6 +7,7 @@ import type { Holiday, LeaveType, Shift } from "../lib/types";
 import { Badge, Button, Card, Empty, ErrorText, Input, Modal, PageHeader, Select, Spinner } from "../components/ui";
 import { fmtDate, todayIn } from "../lib/utils";
 import { DayRulesCard } from "../components/DayRulesCard";
+import { OvertimeCard } from "../components/OvertimeCard";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const hhmm = (t: string) => t.slice(0, 5);
@@ -249,6 +250,7 @@ export function Settings() {
       </Card>
 
       <DayRulesCard canEdit={canEditOrg} />
+      <OvertimeCard canEdit={canEditOrg} />
 
       <Card className="mb-5 space-y-3 p-4">
         <h2 className="text-sm font-semibold">Attendance pay rules</h2>

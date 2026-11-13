@@ -36,6 +36,10 @@ export function Payroll() {
   const [structForm, setStructForm] = useState<StructForm | null>(null);
 
   const structOf = useMemo(() => new Map(structs.map((s) => [s.employee_id, s])), [structs]);
+  const hasSalary = (id: string) => {
+    const s = structOf.get(id);
+    return !!s && num(s.basic) + num(s.hra) + num(s.allowances) > 0;
+  };
 
   const loadBase = useCallback(async () => {
     const [s, e, st] = await Promise.all([
@@ -76,7 +80,7 @@ export function Payroll() {
     const staff = await supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on, designation, department")
       .or(`is_active.eq.true,exit_on.gte.${month}-01`).lte("joined_on", monthDates(month).at(-1)!).order("full_name");
     if (staff.error) throw staff.error;
-    const eligible = ((staff.data as Emp[]) ?? []).filter((e) => structOf.has(e.id));
+    const eligible = ((staff.data as Emp[]) ?? []).filter((e) => hasSalary(e.id));
     if (eligible.length === 0) throw new Error("No employee has a salary set. Add salaries in the Salaries tab first.");
     let runId = run?.id;
     if (!runId) {
@@ -88,7 +92,7 @@ export function Payroll() {
     const keep = new Map(slips.map((s) => [s.employee_id, s]));
     const fresh = rows.map((row) => {
       const old = keep.get(row.employee.id);
-      return { run_id: runId, org_id: org!.id, employee_id: row.employee.id, ...computeSlip(structOf.get(row.employee.id)!, settings!, row, num(old?.bonus), num(old?.other_deduction)) };
+      return { run_id: runId, org_id: org!.id, employee_id: row.employee.id, ...computeSlip(structOf.get(row.employee.id)!, settings!, row, num(old?.bonus), num(old?.other_deduction), org!) };
     });
     const del = await supabase.from("payslips").delete().eq("run_id", runId);
     if (del.error) throw del.error;
@@ -111,12 +115,14 @@ export function Payroll() {
     }
 
     if (slips.some((p) => num(p.net_pay) < 0)) throw new Error("One or more payslips have a negative net pay (shown in red). Adjust them before finalising.");
-    const [pl, pc] = await Promise.all([
+    const [pl, pc, po] = await Promise.all([
+      supabase.from("attendance").select("id", { count: "exact", head: true }).eq("ot_status", "pending").gte("work_date", monthDate).lte("work_date", last),
       supabase.from("leave_requests").select("id", { count: "exact", head: true }).eq("status", "pending").lte("from_date", last).gte("to_date", monthDate),
       supabase.from("correction_requests").select("id", { count: "exact", head: true }).eq("status", "pending").gte("work_date", monthDate).lte("work_date", last),
     ]);
-    const pending = (pl.count ?? 0) + (pc.count ?? 0);
-    const warn = pending > 0 ? `${pending} leave or correction request(s) for this month are still pending. Once you finalise, they cannot be approved unless payroll is reopened.\n\n` : "";
+    // The array order above is [overtime, leave, corrections].
+    const pending = (pl.count ?? 0) + (pc.count ?? 0) + (po.count ?? 0);
+    const warn = pending > 0 ? `${pending} leave, correction or overtime item(s) for this month are still pending. Once you finalise, they cannot be approved unless payroll is reopened, and pending overtime is not paid.\n\n` : "";
     if (!window.confirm(`${warn}Finalise payroll for ${monthLabel(month)}? Employees will see their payslips and the figures can no longer be changed.`)) return;
 
     // Freeze the month's attendance sheet, so later rule changes cannot rewrite it.
@@ -126,7 +132,7 @@ export function Payroll() {
     const sheet = await loadMuster(month, today, org!, (staff.data as MusterEmployee[]) ?? []);
     await supabase.from("muster_snapshots").delete().eq("month", monthDate);
     const snap = await supabase.from("muster_snapshots").insert(
-      sheet.map((r) => ({ org_id: org!.id, month: monthDate, employee_id: r.employee.id, full_name: r.employee.full_name, emp_code: r.employee.emp_code, days: r.days, counts: r.counts, unpaid_off: r.unpaidOff, payable: r.payable })),
+      sheet.map((r) => ({ org_id: org!.id, month: monthDate, employee_id: r.employee.id, full_name: r.employee.full_name, emp_code: r.employee.emp_code, days: r.days, counts: r.counts, unpaid_off: r.unpaidOff, payable: r.payable, ot_minutes: r.otMinutes })),
     );
     if (snap.error) throw snap.error;
     const { error } = await supabase.from("payroll_runs").update({ status: "locked", locked_at: new Date().toISOString() }).eq("id", run!.id);
@@ -146,7 +152,7 @@ export function Payroll() {
       const bonus = Math.max(0, num(adjust.bonus));
       const other = Math.max(0, num(adjust.other));
       const s = adjust.slip;
-      const t = totals({ basic: num(s.basic), hra: num(s.hra), allowances: num(s.allowances) }, bonus, other, st, settings!, num(s.tds));
+      const t = totals({ basic: num(s.basic), hra: num(s.hra), allowances: num(s.allowances) }, bonus, other, st, settings!, num(s.tds), num(s.ot_pay));
       const { error } = await supabase.from("payslips").update({ bonus, other_deduction: other, ...t }).eq("id", s.id);
       if (error) throw error;
       setAdjust(null);
@@ -156,8 +162,8 @@ export function Payroll() {
 
   const exportRegister = () =>
     downloadCsv(`payroll_register_${month}.csv`, [
-      ["Employee", "Code", "Paid days", "Unpaid days", "Basic", "HRA", "Allowances", "Bonus", "Gross", "PF", "ESI", "Prof. tax", "TDS", "Other deductions", "Total deductions", "Net pay", "Employer PF", "Employer ESI"],
-      ...slips.map((s) => [s.employee?.full_name, s.employee?.emp_code, s.paid_days, s.unpaid_days, s.basic, s.hra, s.allowances, s.bonus, s.gross, s.pf_employee, s.esi_employee, s.pt, s.tds, s.other_deduction, s.total_deductions, s.net_pay, s.pf_employer, s.esi_employer]),
+      ["Employee", "Code", "Paid days", "Unpaid days", "Basic", "HRA", "Allowances", "Bonus", "OT hours", "OT pay", "Gross", "PF", "ESI", "Prof. tax", "TDS", "Other deductions", "Total deductions", "Net pay", "Employer PF", "Employer ESI"],
+      ...slips.map((s) => [s.employee?.full_name, s.employee?.emp_code, s.paid_days, s.unpaid_days, s.basic, s.hra, s.allowances, s.bonus, s.ot_hours, s.ot_pay, s.gross, s.pf_employee, s.esi_employee, s.pt, s.tds, s.other_deduction, s.total_deductions, s.net_pay, s.pf_employer, s.esi_employer]),
     ]);
 
   const exportBank = () =>
@@ -178,6 +184,7 @@ export function Payroll() {
       basic: String(num(s?.basic)), hra: String(num(s?.hra)), allowances: String(num(s?.allowances)), tds_monthly: String(num(s?.tds_monthly)),
       pf_applicable: s?.pf_applicable ?? true, esi_applicable: s?.esi_applicable ?? true,
       bank_name: s?.bank_name ?? "", bank_account: s?.bank_account ?? "", ifsc: s?.ifsc ?? "", pan: s?.pan ?? "", uan: s?.uan ?? "",
+      ot_mode: s?.ot_mode ?? "company", ot_multiplier: String(num(s?.ot_multiplier) || 1.5), ot_fixed_rate: String(num(s?.ot_fixed_rate)),
     });
   };
 
@@ -192,6 +199,7 @@ export function Payroll() {
         basic: num(f.basic), hra: num(f.hra), allowances: num(f.allowances), tds_monthly: num(f.tds_monthly),
         pf_applicable: f.pf_applicable, esi_applicable: f.esi_applicable,
         bank_name: txt(f.bank_name), bank_account: txt(f.bank_account), ifsc: txt(f.ifsc)?.toUpperCase() ?? null, pan: txt(f.pan)?.toUpperCase() ?? null, uan: txt(f.uan),
+        ot_mode: f.ot_mode, ot_multiplier: f.ot_mode === "multiplier" ? num(f.ot_multiplier) : null, ot_fixed_rate: f.ot_mode === "fixed" ? num(f.ot_fixed_rate) : null,
         updated_at: new Date().toISOString(),
       });
       if (error) throw error;
@@ -226,7 +234,7 @@ export function Payroll() {
   if (!settings) return <Spinner />;
 
   const locked = run?.status === "locked";
-  const missing = emps.filter((e) => !structOf.has(e.id));
+  const missing = emps.filter((e) => !hasSalary(e.id));
   const monthOpen = month === today.slice(0, 7);
   const sum = (k: keyof Payslip) => slips.reduce((t, s) => t + num(s[k]), 0);
   const sf = structForm;
@@ -287,6 +295,7 @@ export function Payroll() {
                         <th className="px-4 py-2 font-medium">Employee</th>
                         <th className="px-3 py-2 text-right font-medium">Paid days</th>
                         <th className="px-3 py-2 text-right font-medium">Gross</th>
+                        {org!.ot_enabled && <th className="px-3 py-2 text-right font-medium">Overtime</th>}
                         <th className="px-3 py-2 text-right font-medium">PF</th>
                         <th className="px-3 py-2 text-right font-medium">ESI</th>
                         <th className="px-3 py-2 text-right font-medium">PT</th>
@@ -302,6 +311,7 @@ export function Payroll() {
                           <td className="px-4 py-2 font-medium">{s.employee?.full_name}</td>
                           <td className="px-3 py-2 text-right">{num(s.paid_days)} / {s.days_in_month}</td>
                           <td className="px-3 py-2 text-right">{inr(s.gross)}</td>
+                          {org!.ot_enabled && <td className="px-3 py-2 text-right">{num(s.ot_pay) ? <>{inr(s.ot_pay)}<span className="block text-[10px] text-slate-500">{num(s.ot_hours)} h</span></> : "—"}</td>}
                           <td className="px-3 py-2 text-right">{inr(s.pf_employee)}</td>
                           <td className="px-3 py-2 text-right">{inr(s.esi_employee)}</td>
                           <td className="px-3 py-2 text-right">{inr(s.pt)}</td>
@@ -344,7 +354,7 @@ export function Payroll() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {emps.map((e) => {
-                    const s = structOf.get(e.id);
+                    const s = hasSalary(e.id) ? structOf.get(e.id) : undefined;
                     return (
                       <tr key={e.id} className="tabular-nums">
                         <td className="px-4 py-2 font-medium">{e.full_name}</td>
@@ -447,6 +457,18 @@ export function Payroll() {
               <label className="flex items-center gap-2"><input type="checkbox" checked={sf.pf_applicable} onChange={(e) => setF("pf_applicable", e.target.checked)} /> PF applies</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={sf.esi_applicable} onChange={(e) => setF("esi_applicable", e.target.checked)} /> ESI applies</label>
             </div>
+            {org!.ot_enabled && (
+              <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 p-3">
+                <Select label="Overtime for this employee" value={sf.ot_mode} onChange={(e) => setF("ot_mode", e.target.value)}>
+                  <option value="company">Company rule ({org!.ot_mode === "fixed" ? `${inr(org!.ot_fixed_rate)} per hour` : `${Number(org!.ot_multiplier)}× hourly rate`})</option>
+                  <option value="multiplier">Own multiple of hourly rate</option>
+                  <option value="fixed">Own fixed amount per hour</option>
+                  <option value="none">No overtime pay</option>
+                </Select>
+                {sf.ot_mode === "multiplier" && <Input label="Multiple (1.5 = 150%)" type="number" min={0.5} max={5} step="0.05" required value={sf.ot_multiplier ?? ""} onChange={(e) => setF("ot_multiplier", e.target.value)} />}
+                {sf.ot_mode === "fixed" && <Input label="Amount per OT hour ₹" type="number" min={0} step="1" required value={sf.ot_fixed_rate ?? ""} onChange={(e) => setF("ot_fixed_rate", e.target.value)} />}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <Input label="Bank name" value={sf.bank_name ?? ""} onChange={(e) => setF("bank_name", e.target.value)} />
               <Input label="Account number" autoComplete="off" value={sf.bank_account ?? ""} onChange={(e) => setF("bank_account", e.target.value)} />

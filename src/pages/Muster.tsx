@@ -35,7 +35,7 @@ export function Muster() {
     Promise.all([
       // Active staff, plus anyone whose last working day falls in or after this month.
       supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on").or(`is_active.eq.true,exit_on.gte.${first}`).lte("joined_on", last).order("full_name"),
-      fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value").gte("work_date", first).lte("work_date", last).order("id")),
+      fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value, ot_minutes, ot_status").gte("work_date", first).lte("work_date", last).order("id")),
       supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
       supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),
     ]).then(([e, a, l, h]) => {
@@ -67,6 +67,8 @@ export function Muster() {
           counts: r.counts,
           unpaidOff: Number(r.unpaid_off),
           payable: Number(r.payable),
+          otMinutes: Number(r.ot_minutes ?? 0),
+          otPendingMinutes: 0,
         })),
       );
     })();
@@ -83,8 +85,8 @@ export function Muster() {
 
   const exportCsv = () =>
     downloadCsv(`attendance_sheet_${month}.csv`, [
-      ["Employee", "Code", ...dates.map((d) => d.slice(8)), ...COLS, "Unpaid off days", "Payable days"],
-      ...rows.map((r) => [r.employee.full_name, r.employee.emp_code, ...r.days, ...COLS.map((c) => r.counts[c]), r.unpaidOff, r.payable]),
+      ["Employee", "Code", ...dates.map((d) => d.slice(8)), ...COLS, "Unpaid off days", "Payable days", "Overtime hours"],
+      ...rows.map((r) => [r.employee.full_name, r.employee.emp_code, ...r.days, ...COLS.map((c) => r.counts[c]), r.unpaidOff, r.payable, Math.round((r.otMinutes / 60) * 100) / 100]),
     ]);
 
   return (
@@ -131,6 +133,7 @@ export function Muster() {
                   ))}
                   <th className="px-2 py-2 text-center font-medium" title="Weekly offs and holidays not paid under the sandwich rule">Unpaid off</th>
                   <th className="px-3 py-2 text-center font-medium">Payable</th>
+                  {org!.ot_enabled && <th className="px-3 py-2 text-center font-medium" title="Approved overtime hours">OT h</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -147,6 +150,12 @@ export function Muster() {
                     ))}
                     <td className="px-2 py-1.5 text-center text-slate-700">{r.unpaidOff || ""}</td>
                     <td className="px-3 py-1.5 text-center font-semibold">{r.payable}</td>
+                    {org!.ot_enabled && (
+                      <td className="px-3 py-1.5 text-center text-slate-700">
+                        {r.otMinutes ? Math.round((r.otMinutes / 60) * 100) / 100 : ""}
+                        {r.otPendingMinutes ? <span className="block text-[10px] text-amber-600">+{Math.round((r.otPendingMinutes / 60) * 100) / 100} pending</span> : null}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
