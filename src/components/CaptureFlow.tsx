@@ -170,7 +170,7 @@ export function CaptureFlow({
   return (
     <Modal title={title} onClose={saving ? () => undefined : onClose}>
       <div className="space-y-4">
-        <div className={`relative mx-auto aspect-square w-full max-w-xs overflow-hidden rounded-2xl bg-slate-900 ring-4 ${shot ? (verdict === "matched" ? "ring-emerald-500" : verdict === "mismatch" ? "ring-rose-500" : "ring-transparent") : guide === "ok" ? "ring-emerald-500" : guide ? "ring-amber-400" : "ring-transparent"}`}>
+        <div className={`relative mx-auto aspect-square w-full max-w-xs overflow-hidden rounded-2xl bg-slate-900 ring-4 ${shot ? (verdict === "matched" ? "ring-success-500" : verdict === "mismatch" ? "ring-rose-500" : "ring-transparent") : guide === "ok" ? "ring-success-500" : guide ? "ring-amber-400" : "ring-transparent"}`}>
           <video
             ref={videoRef}
             playsInline
@@ -181,7 +181,7 @@ export function CaptureFlow({
           {shot && <img src={shot.url} alt="Your selfie" className="h-full w-full -scale-x-100 object-cover" />}
           {!camReady && !camError && <p className="absolute inset-0 grid place-items-center text-sm text-slate-300">Starting camera…</p>}
           {!shot && guide && (
-            <p aria-live="polite" className={`absolute inset-x-0 bottom-0 py-1.5 text-center text-sm font-medium text-white ${guide === "ok" ? "bg-emerald-600/85" : "bg-amber-600/85"}`}>
+            <p aria-live="polite" className={`absolute inset-x-0 bottom-0 py-1.5 text-center text-sm font-medium text-white ${guide === "ok" ? "bg-success-600/85" : "bg-amber-600/85"}`}>
               {guide === "ok" ? "Face detected. Hold still and take the selfie." : guide === "far" ? "Move closer to the camera." : "No face found. Look at the camera."}
             </p>
           )}
@@ -189,7 +189,7 @@ export function CaptureFlow({
         <ErrorText>{camError}</ErrorText>
 
         {shot && verdict === "matched" && (
-          <p role="status" className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
+          <p role="status" className="flex items-center gap-2 rounded-lg bg-success-50 px-3 py-2 text-sm font-medium text-success-700">
             <CircleCheck className="h-5 w-5 shrink-0" /> Face matched
           </p>
         )}
@@ -208,7 +208,7 @@ export function CaptureFlow({
 
         <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
           <span className="flex items-center gap-2 text-slate-700">
-            <MapPin className="h-4 w-4 shrink-0 text-indigo-600" />
+            <MapPin className="h-4 w-4 shrink-0 text-brand-600" />
             {pos
               ? `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)} (±${Math.round(pos.coords.accuracy)} m)`
               : locating

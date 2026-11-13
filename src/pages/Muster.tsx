@@ -105,7 +105,7 @@ export function Muster() {
       />
 
       {frozen && (
-        <p className="mb-3 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-800">Payroll for this month is finalised. This is the sheet as it was saved at that time; later rule changes do not alter it.</p>
+        <p className="mb-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">Payroll for this month is finalised. This is the sheet as it was saved at that time; later rule changes do not alter it.</p>
       )}
 
       <div className="mb-3 flex flex-wrap gap-2 text-xs">

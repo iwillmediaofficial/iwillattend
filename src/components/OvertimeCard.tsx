@@ -116,7 +116,7 @@ export function OvertimeCard({ canEdit }: { canEdit: boolean }) {
         {canEdit ? (
           <div className="flex items-center gap-3">
             <Button type="submit" loading={busy}>Save overtime rules</Button>
-            {saved && <span className="text-sm text-emerald-600">Saved</span>}
+            {saved && <span className="text-sm text-success-600">Saved</span>}
           </div>
         ) : (
           <p className="text-xs text-slate-500">Only the owner or an admin can change these rules.</p>

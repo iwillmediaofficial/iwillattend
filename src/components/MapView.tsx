@@ -48,7 +48,7 @@ export function MapView({
     layer.clearLayers();
     const bounds: L.LatLngExpression[] = [];
     for (const p of points) {
-      const color = p.color ?? "#4f46e5";
+      const color = p.color ?? "#04837f";
       if (p.radius) L.circle([p.lat, p.lng], { radius: p.radius, color, weight: 1, fillOpacity: 0.12 }).addTo(layer);
       const marker = L.circleMarker([p.lat, p.lng], { radius: 7, color: "#fff", weight: 2, fillColor: color, fillOpacity: 1 }).addTo(layer);
       const el = document.createElement("span");

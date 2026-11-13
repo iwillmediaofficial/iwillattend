@@ -14,7 +14,7 @@ interface Row {
   dirty: boolean;
 }
 
-const fieldCls = "w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
+const fieldCls = "w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100";
 
 /** Lets an admin give individual employees their own overtime rate, for example A at 2x and B at 1.5x. */
 export function EmployeeOvertimeRates() {
@@ -118,7 +118,7 @@ export function EmployeeOvertimeRates() {
       </ul>
       <div className="flex items-center gap-3 border-t border-slate-200 px-4 py-3">
         <Button type="button" variant="outline" onClick={save} loading={busy} disabled={!dirty}>Save employee rates</Button>
-        {saved && !dirty && <span className="text-sm text-emerald-600">Saved</span>}
+        {saved && !dirty && <span className="text-sm text-success-600">Saved</span>}
       </div>
       <div className="px-4 pb-3"><ErrorText>{error}</ErrorText></div>
     </div>

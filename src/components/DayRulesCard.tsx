@@ -54,14 +54,14 @@ export function DayRulesCard({ canEdit }: { canEdit: boolean }) {
             const on = preset === id;
             return (
               <button key={id} type="button" role="radio" aria-checked={on} disabled={!canEdit} onClick={() => change(PRESETS[id].knobs)}
-                className={`rounded-xl border p-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${on ? "border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600" : "border-slate-200 bg-white hover:border-slate-300"}`}>
+                className={`rounded-xl border p-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${on ? "border-brand-600 bg-brand-50 ring-1 ring-brand-600" : "border-slate-200 bg-white hover:border-slate-300"}`}>
                 <p className="text-sm font-semibold">{PRESETS[id].name}</p>
                 <p className="mt-1 text-xs text-slate-600">{PRESETS[id].summary}</p>
               </button>
             );
           })}
         </div>
-        {preset === "custom" && <p className="text-xs font-medium text-indigo-700">Custom rules: the settings below do not match a preset.</p>}
+        {preset === "custom" && <p className="text-xs font-medium text-brand-700">Custom rules: the settings below do not match a preset.</p>}
 
         <div className="grid gap-3 sm:grid-cols-3">
           <Input label="Full day needs (hours)" type="number" min={1} max={24} step="0.25" required disabled={!canEdit} value={r.full_day_hours} onChange={(e) => change({ full_day_hours: Number(e.target.value) })} />
@@ -96,7 +96,7 @@ export function DayRulesCard({ canEdit }: { canEdit: boolean }) {
         {canEdit ? (
           <div className="flex items-center gap-3">
             <Button type="submit" loading={busy}>Save rules</Button>
-            {saved && <span className="text-sm text-emerald-600">Saved</span>}
+            {saved && <span className="text-sm text-success-600">Saved</span>}
           </div>
         ) : (
           <p className="text-xs text-slate-500">Only the owner or an admin can change these rules.</p>

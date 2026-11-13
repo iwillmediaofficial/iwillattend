@@ -72,7 +72,7 @@ export function Plans() {
           const current = p.id === sub.plan_id;
           const tooSmall = sub.active_employees > p.max_employees;
           return (
-            <Card key={p.id} className={`flex flex-col p-5 ${current ? "border-indigo-600 ring-1 ring-indigo-600" : ""}`}>
+            <Card key={p.id} className={`flex flex-col p-5 ${current ? "border-brand-600 ring-1 ring-brand-600" : ""}`}>
               <p className="flex items-center justify-between font-semibold">
                 {p.name} {current && <Badge tone="indigo">Current</Badge>}
               </p>
@@ -89,7 +89,7 @@ export function Plans() {
                   ...(p.face ? ["Face recognition"] : []),
                 ].map((line) => (
                   <li key={line} className="flex gap-2">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> {line}
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-success-600" /> {line}
                   </li>
                 ))}
               </ul>

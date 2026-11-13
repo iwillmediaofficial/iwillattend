@@ -13,7 +13,7 @@ const FEATURES = [
   { icon: ShieldCheck, title: "Your data stays yours", text: "Each company's data is isolated, and selfies are stored privately." },
 ];
 
-const cta = "rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700";
+const cta = "rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700";
 
 export function Landing() {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -25,17 +25,15 @@ export function Landing() {
   return (
     <div className="min-h-full bg-white">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <span className="flex items-center gap-2 text-lg font-semibold text-indigo-600">
-          <img src="/icon.svg" alt="" className="h-8 w-8" /> IWILL Attend
-        </span>
+        <img src="/logo.png" alt="IWILL Attend" className="h-10 w-auto sm:h-11" />
         <nav className="flex items-center gap-2 text-sm font-medium">
           <Link to="/login" className="rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100">Sign in</Link>
-          <Link to="/signup" className="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700">Start free</Link>
+          <Link to="/signup" className="rounded-lg bg-brand-600 px-3 py-2 text-white hover:bg-brand-700">Start free</Link>
         </nav>
       </header>
 
       <section className="mx-auto max-w-3xl px-4 pb-14 pt-10 text-center sm:pt-16">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">Attendance you can trust, payroll that follows</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-navy-900 sm:text-5xl">Attendance you can trust, payroll that follows</h1>
         <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
           Selfie and location based attendance for office and field staff, with leave, shifts and India payroll in one place. Works in any phone browser.
         </p>
@@ -50,8 +48,8 @@ export function Landing() {
         <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ icon: Icon, title, text }) => (
             <div key={title} className="rounded-xl border border-slate-200 bg-white p-5">
-              <Icon className="h-6 w-6 text-indigo-600" />
-              <h3 className="mt-3 font-semibold text-slate-900">{title}</h3>
+              <Icon className="h-6 w-6 text-brand-600" />
+              <h3 className="mt-3 font-semibold text-navy-900">{title}</h3>
               <p className="mt-1 text-sm text-slate-600">{text}</p>
             </div>
           ))}
@@ -60,13 +58,13 @@ export function Landing() {
 
       {plans.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-14">
-          <h2 className="text-center text-2xl font-bold text-slate-900">Simple pricing</h2>
+          <h2 className="text-center text-2xl font-bold text-navy-900">Simple pricing</h2>
           <p className="mt-2 text-center text-sm text-slate-600">Start on the trial, then pick the plan that fits your team.</p>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {plans.map((p) => (
-              <div key={p.id} className={`flex flex-col rounded-xl border p-6 ${p.id === "standard" ? "border-indigo-600 ring-1 ring-indigo-600" : "border-slate-200"}`}>
-                <h3 className="font-semibold text-slate-900">{p.name}</h3>
-                <p className="mt-2 text-3xl font-bold text-slate-900">
+              <div key={p.id} className={`flex flex-col rounded-xl border p-6 ${p.id === "standard" ? "border-brand-600 ring-1 ring-brand-600" : "border-slate-200"}`}>
+                <h3 className="font-semibold text-navy-900">{p.name}</h3>
+                <p className="mt-2 text-3xl font-bold text-navy-900">
                   {Number(p.price_monthly) === 0 ? "₹0" : `₹${Number(p.price_monthly).toLocaleString("en-IN")}`}
                   <span className="text-sm font-normal text-slate-500"> / month</span>
                 </p>
@@ -79,7 +77,7 @@ export function Landing() {
                     ...(p.face ? ["Face recognition"] : []),
                   ].map((line) => (
                     <li key={line} className="flex gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> {line}
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success-600" /> {line}
                     </li>
                   ))}
                 </ul>

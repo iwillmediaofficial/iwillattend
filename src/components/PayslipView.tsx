@@ -48,7 +48,7 @@ export function PayslipView({ slip, orgName, month, draft, onClose }: { slip: Pa
             <Line label="Total deductions" value={slip.total_deductions} bold />
           </div>
         </div>
-        <div className="mt-4 flex justify-between rounded-lg bg-indigo-50 px-4 py-3 text-base font-semibold text-indigo-900">
+        <div className="mt-4 flex justify-between rounded-lg bg-brand-50 px-4 py-3 text-base font-semibold text-brand-900">
           <span>Net pay</span>
           <span className="tabular-nums">{inr(slip.net_pay)}</span>
         </div>

@@ -50,7 +50,7 @@ function App() {
     return (
       <div className="min-h-full">
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:px-8">
-          <span className="text-sm font-semibold text-indigo-600">IWILL Attend · Platform</span>
+          <span className="flex items-center gap-3 text-sm font-semibold text-navy-900"><img src="/logo.png" alt="IWILL Attend" className="h-8 w-auto" /> Platform</span>
           <button onClick={signOut} className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">Sign out</button>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-5 md:px-8">

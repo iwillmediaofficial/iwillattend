@@ -12,7 +12,7 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
     <div className="grid min-h-full place-items-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <Link to="/" aria-label="IWILL Attend home"><img src="/icon.svg" alt="" className="mx-auto mb-3 h-12 w-12" /></Link>
+          <Link to="/" aria-label="IWILL Attend home"><img src="/logo.png" alt="IWILL Attend" className="mx-auto mb-4 h-14 w-auto" /></Link>
           <h1 className="text-xl font-semibold">{title}</h1>
           <p className="text-sm text-slate-500">{subtitle}</p>
         </div>
@@ -31,7 +31,7 @@ function PasswordInput({ label, hint, ...rest }: InputHTMLAttributes<HTMLInputEl
         <input
           {...rest}
           type={show ? "text" : "password"}
-          className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-10 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
         />
         <button
           type="button"
@@ -63,7 +63,7 @@ export function Login() {
   };
 
   return (
-    <Shell title="IWILL Attend" subtitle="Sign in to mark or manage attendance">
+    <Shell title="Sign in" subtitle="Mark or manage attendance">
       <form onSubmit={submit} className="space-y-4">
         <Input label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <PasswordInput label="Password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -73,7 +73,7 @@ export function Login() {
         </Button>
         <p className="text-center text-sm text-slate-500">
           New company?{" "}
-          <Link to="/signup" className="font-medium text-indigo-600 hover:underline">
+          <Link to="/signup" className="font-medium text-brand-600 hover:underline">
             Register here
           </Link>
         </p>
@@ -109,7 +109,7 @@ export function Signup() {
         <p className="text-sm text-slate-600">
           We sent a confirmation link to <b>{email}</b>. Open it, then come back and sign in to set up your company.
         </p>
-        <Link to="/login" className="mt-4 block text-center text-sm font-medium text-indigo-600 hover:underline">
+        <Link to="/login" className="mt-4 block text-center text-sm font-medium text-brand-600 hover:underline">
           Back to sign in
         </Link>
       </Shell>
@@ -127,7 +127,7 @@ export function Signup() {
         </Button>
         <p className="text-center text-sm text-slate-500">
           Already registered?{" "}
-          <Link to="/login" className="font-medium text-indigo-600 hover:underline">
+          <Link to="/login" className="font-medium text-brand-600 hover:underline">
             Sign in
           </Link>
         </p>
@@ -173,7 +173,7 @@ export function Onboarding() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-6 text-center">
-        <img src="/icon.svg" alt="" className="mx-auto mb-3 h-12 w-12" />
+        <img src="/logo.png" alt="IWILL Attend" className="mx-auto mb-4 h-14 w-auto" />
         <h1 className="text-xl font-semibold">Set up your company</h1>
         <p className="text-sm text-slate-500">Step 2 of 2 · {session?.user.email}</p>
       </div>
@@ -192,10 +192,10 @@ export function Onboarding() {
                   role="radio"
                   aria-checked={on}
                   onClick={() => setPlan(p.id)}
-                  className={`rounded-xl border p-4 text-left ${on ? "border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                  className={`rounded-xl border p-4 text-left ${on ? "border-brand-600 bg-brand-50 ring-1 ring-brand-600" : "border-slate-200 bg-white hover:border-slate-300"}`}
                 >
                   <p className="flex items-center justify-between font-semibold">
-                    {p.name} {on && <Check className="h-4 w-4 text-indigo-600" />}
+                    {p.name} {on && <Check className="h-4 w-4 text-brand-600" />}
                   </p>
                   <p className="mt-1 text-lg font-bold">
                     ₹{Number(p.price_monthly).toLocaleString("en-IN")}

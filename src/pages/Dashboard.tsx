@@ -50,11 +50,11 @@ export function Dashboard() {
   const points = useMemo<MapPoint[]>(() => {
     if (!data) return [];
     return [
-      ...data.branches.map((b) => ({ lat: b.latitude, lng: b.longitude, label: `Branch: ${b.name}`, color: "#64748b", radius: b.radius_m })),
+      ...data.branches.map((b) => ({ lat: b.latitude, lng: b.longitude, label: `Branch: ${b.name}`, color: "#0c2e52", radius: b.radius_m })),
       ...data.attendance.flatMap((a) =>
         a.check_in_lat == null || a.check_in_lng == null
           ? []
-          : [{ lat: a.check_in_lat, lng: a.check_in_lng, label: `${a.employee?.full_name ?? "Employee"} · in ${fmtTime(a.check_in_at, tz)}`, color: "#059669" }],
+          : [{ lat: a.check_in_lat, lng: a.check_in_lng, label: `${a.employee?.full_name ?? "Employee"} · in ${fmtTime(a.check_in_at, tz)}`, color: "#33a101" }],
       ),
       ...data.visits.map((v) => ({
         lat: v.latitude,
@@ -91,8 +91,8 @@ export function Dashboard() {
     data.attendance.filter((a) => a.check_out_at && faceFlagged(a.check_out_face_match, a.face_required)).length +
     data.visits.filter((v) => faceFlagged(v.face_match, v.face_required)).length;
   const stats = [
-    { label: "Active staff", value: data.employees.length, cls: "text-slate-900" },
-    { label: "Checked in", value: data.attendance.length, cls: "text-emerald-600" },
+    { label: "Active staff", value: data.employees.length, cls: "text-navy-900" },
+    { label: "Checked in", value: data.attendance.length, cls: "text-success-600" },
     { label: "Not checked in", value: absent.length, cls: "text-rose-600" },
     { label: "Late", value: data.attendance.filter((a) => a.late_minutes > 0).length, cls: "text-amber-600" },
     { label: "Field visits", value: data.visits.length, cls: "text-amber-600" },
@@ -119,7 +119,7 @@ export function Dashboard() {
 
       <div className="mb-5">
         <MapView points={points} className="h-80" />
-        <p className="mt-1 text-xs text-slate-500">Green: check-ins · Orange: field visits · Grey circle: branch geofence</p>
+        <p className="mt-1 text-xs text-slate-500">Green: check-ins · Orange: field visits · Navy circle: branch geofence</p>
       </div>
 
       <Card className="mb-5">
@@ -182,7 +182,7 @@ export function Dashboard() {
                               <Badge tone="amber">Outside · {fmtDistance(a.check_in_distance_m)}</Badge>
                             )}
                             {a.check_in_accuracy_m != null && a.check_in_accuracy_m > org!.max_accuracy_m && <Badge tone="amber">Low accuracy ±{Math.round(a.check_in_accuracy_m)} m</Badge>}
-                            <a href={mapsLink(a.check_in_lat, a.check_in_lng)} target="_blank" rel="noreferrer" className="text-indigo-600" aria-label="Open in maps">
+                            <a href={mapsLink(a.check_in_lat, a.check_in_lng)} target="_blank" rel="noreferrer" className="text-brand-600" aria-label="Open in maps">
                               <MapPin className="h-4 w-4" />
                             </a>
                           </>
@@ -230,7 +230,7 @@ export function Dashboard() {
                       {v.notes ? ` · ${v.notes}` : ""}
                     </p>
                   </div>
-                  <a href={mapsLink(v.latitude, v.longitude)} target="_blank" rel="noreferrer" className="text-indigo-600" aria-label="Open in maps">
+                  <a href={mapsLink(v.latitude, v.longitude)} target="_blank" rel="noreferrer" className="text-brand-600" aria-label="Open in maps">
                     <MapPin className="h-4 w-4" />
                   </a>
                 </li>

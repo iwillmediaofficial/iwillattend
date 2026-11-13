@@ -96,7 +96,7 @@ export function Wfh() {
               <Input label="To" type="date" required min={from} value={to} onChange={(e) => setTo(e.target.value)} />
             </div>
             <Field label="Reason (optional)">
-              <textarea value={reason} maxLength={500} rows={2} onChange={(e) => setReason(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+              <textarea value={reason} maxLength={500} rows={2} onChange={(e) => setReason(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
             </Field>
             <p className="text-xs text-slate-500">You still check in and out with a selfie on those days; only the office location rule is lifted.</p>
             <ErrorText>{error}</ErrorText>

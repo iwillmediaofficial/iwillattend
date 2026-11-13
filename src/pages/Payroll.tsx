@@ -245,7 +245,7 @@ export function Payroll() {
       <PageHeader title="Payroll" subtitle="Salaries, monthly payroll and payslips" />
       <div className="mb-5 flex gap-1 rounded-lg bg-slate-100 p-1 text-sm font-medium">
         {([["run", "Monthly payroll"], ["salaries", "Salaries"], ["rules", "Rules"]] as [Tab, string][]).map(([k, label]) => (
-          <button key={k} onClick={() => { setError(""); setTab(k); }} className={`flex-1 rounded-md px-3 py-1.5 ${tab === k ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600"}`}>
+          <button key={k} onClick={() => { setError(""); setTab(k); }} className={`flex-1 rounded-md px-3 py-1.5 ${tab === k ? "bg-white text-brand-700 shadow-sm" : "text-slate-600"}`}>
             {label}
           </button>
         ))}

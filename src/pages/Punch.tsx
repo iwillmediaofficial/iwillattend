@@ -84,7 +84,7 @@ export function Punch() {
       <PageHeader title={`Hello, ${employee!.full_name.split(" ")[0]}`} subtitle={fmtDate(today)} />
 
       {result && (
-        <p role="status" className={`mx-auto mb-4 max-w-md rounded-lg px-4 py-3 text-sm font-medium ${result.ok ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{result.text}</p>
+        <p role="status" className={`mx-auto mb-4 max-w-md rounded-lg px-4 py-3 text-sm font-medium ${result.ok ? "bg-success-50 text-success-700" : "bg-amber-50 text-amber-800"}`}>{result.text}</p>
       )}
 
       <Card className="mx-auto max-w-md p-6 text-center">
@@ -113,7 +113,7 @@ export function Punch() {
             </p>
             {faceOn && !enrolled ? (
               <>
-                <p className="mb-3 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-800">Register your face once before your first check-in.</p>
+                <p className="mb-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">Register your face once before your first check-in.</p>
                 <Button className="w-full py-3 text-base" onClick={() => setEnrolling(true)}>
                   <ScanFace className="h-5 w-5" /> Register my face
                 </Button>
@@ -159,7 +159,7 @@ export function Punch() {
               </div>
             </dl>
             {done ? (
-              <p className="flex items-center justify-center gap-2 font-medium text-emerald-600">
+              <p className="flex items-center justify-center gap-2 font-medium text-success-600">
                 <CheckCircle2 className="h-5 w-5" /> Day complete
               </p>
             ) : (

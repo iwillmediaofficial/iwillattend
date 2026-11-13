@@ -4,12 +4,12 @@ import type { Attendance, Employee, Holiday, LeaveRequest, Organization } from "
 export type DayCode = "P" | "L" | "HD" | "SH" | "MC" | "LV" | "LOP" | "A" | "WO" | "H" | "-" | "";
 
 export const DAY_CODES: { code: DayCode; label: string; cls: string }[] = [
-  { code: "P", label: "Present", cls: "bg-emerald-50 text-emerald-700" },
+  { code: "P", label: "Present", cls: "bg-success-50 text-success-700" },
   { code: "L", label: "Late", cls: "bg-amber-50 text-amber-700" },
   { code: "HD", label: "Half day", cls: "bg-orange-50 text-orange-700" },
   { code: "SH", label: "Short hours", cls: "bg-fuchsia-50 text-fuchsia-700" },
   { code: "MC", label: "Missing check-out", cls: "bg-yellow-100 text-yellow-800" },
-  { code: "LV", label: "Paid leave", cls: "bg-indigo-50 text-indigo-700" },
+  { code: "LV", label: "Paid leave", cls: "bg-brand-50 text-brand-700" },
   { code: "LOP", label: "Unpaid leave", cls: "bg-purple-50 text-purple-700" },
   { code: "A", label: "Absent", cls: "bg-rose-50 text-rose-700" },
   { code: "WO", label: "Weekly off", cls: "bg-slate-100 text-slate-500" },

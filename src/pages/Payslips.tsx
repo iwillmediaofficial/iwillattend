@@ -35,7 +35,7 @@ export function Payslips() {
             {rows.map((p) => (
               <li key={p.id}>
                 <button onClick={() => setView(p)} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50">
-                  <FileText className="h-5 w-5 text-indigo-600" />
+                  <FileText className="h-5 w-5 text-brand-600" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{monthLabel(p.run!.month)}</p>
                     <p className="text-xs text-slate-500">Paid days {Number(p.paid_days)} of {p.days_in_month}</p>

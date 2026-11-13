@@ -2,8 +2,8 @@ import { Loader2, X } from "lucide-react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 
 const variants = {
-  primary: "bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300",
-  success: "bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-300",
+  primary: "bg-brand-600 text-white hover:bg-brand-700 disabled:bg-brand-300",
+  success: "bg-success-600 text-white hover:bg-success-700 disabled:bg-success-300",
   danger: "bg-rose-600 text-white hover:bg-rose-700 disabled:bg-rose-300",
   outline: "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50",
   ghost: "text-slate-600 hover:bg-slate-100 disabled:opacity-50",
@@ -29,7 +29,7 @@ export function Button({
 }
 
 const fieldCls =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100";
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-100";
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
@@ -69,11 +69,11 @@ export function Card({ className = "", children }: { className?: string; childre
 }
 
 const tones = {
-  green: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  green: "bg-success-50 text-success-700 ring-success-200",
   red: "bg-rose-50 text-rose-700 ring-rose-200",
   amber: "bg-amber-50 text-amber-700 ring-amber-200",
   slate: "bg-slate-100 text-slate-600 ring-slate-200",
-  indigo: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+  indigo: "bg-brand-50 text-brand-700 ring-brand-200",
 };
 
 export function Badge({ tone = "slate", children }: { tone?: keyof typeof tones; children: ReactNode }) {
@@ -101,7 +101,7 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+        <h1 className="text-xl font-semibold text-navy-900">{title}</h1>
         {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
       </div>
       {action}

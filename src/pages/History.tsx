@@ -134,7 +134,7 @@ export function History() {
             </div>
             <p className="-mt-2 text-xs text-slate-500">Fill only the time that is wrong or missing. For a day you forgot to check in, enter both.</p>
             <Field label="Reason">
-              <textarea required minLength={3} maxLength={500} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+              <textarea required minLength={3} maxLength={500} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
             </Field>
             <ErrorText>{error}</ErrorText>
             <Button type="submit" className="w-full" loading={busy}>Send to manager</Button>

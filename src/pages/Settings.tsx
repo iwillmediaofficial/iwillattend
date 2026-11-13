@@ -166,7 +166,7 @@ export function Settings() {
             {sub.active_employees} of {sub.max_employees} active employees used · Payroll {sub.payroll ? "included" : "not included"} · Face recognition {sub.face ? "included" : "not included"}
             {sub.valid_until ? ` · Valid until ${fmtDate(sub.valid_until)}` : ""}
           </p>
-          <Link to="/plans" className="mt-2 inline-block text-sm font-medium text-indigo-600 hover:underline">View plans and request a change</Link>
+          <Link to="/plans" className="mt-2 inline-block text-sm font-medium text-brand-600 hover:underline">View plans and request a change</Link>
         </Card>
       )}
 
@@ -184,7 +184,7 @@ export function Settings() {
           {canEditOrg && (
             <div className="flex items-center gap-3">
               <Button type="submit" variant="outline">Save details</Button>
-              {companySaved && !pageError && <span className="text-sm text-emerald-600">Saved</span>}
+              {companySaved && !pageError && <span className="text-sm text-success-600">Saved</span>}
             </div>
           )}
         </form>
@@ -228,7 +228,7 @@ export function Settings() {
             const on = org!.weekly_offs.includes(i);
             return (
               <button key={d} disabled={!canEditOrg} onClick={() => toggleOff(i)} aria-pressed={on}
-                className={`rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 ${on ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 bg-white text-slate-600"}`}>
+                className={`rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300 bg-white text-slate-600"}`}>
                 {d}
               </button>
             );
@@ -240,7 +240,7 @@ export function Settings() {
             const on = (org!.alt_saturday_offs ?? []).includes(i + 1);
             return (
               <button key={label} disabled={!canEditOrg || org!.weekly_offs.includes(6)} onClick={() => toggleSaturday(i + 1)} aria-pressed={on}
-                className={`rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 ${on ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 bg-white text-slate-600"}`}>
+                className={`rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300 bg-white text-slate-600"}`}>
                 {label} Sat
               </button>
             );

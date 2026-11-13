@@ -65,7 +65,7 @@ export function Visits() {
           </Button>
         }
       />
-      {result && <p role="status" className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${result.endsWith("Face matched") || result === "Visit saved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{result}</p>}
+      {result && <p role="status" className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${result.endsWith("Face matched") || result === "Visit saved" ? "bg-success-50 text-success-700" : "bg-amber-50 text-amber-800"}`}>{result}</p>}
       <Card>
         {!rows ? (
           <Spinner />
@@ -83,7 +83,7 @@ export function Visits() {
                   </p>
                   {v.notes && <p className="mt-0.5 text-xs text-slate-600">{v.notes}</p>}
                 </div>
-                <a href={mapsLink(v.latitude, v.longitude)} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50" aria-label="Open in maps">
+                <a href={mapsLink(v.latitude, v.longitude)} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-brand-600 hover:bg-brand-50" aria-label="Open in maps">
                   <MapPin className="h-4 w-4" />
                 </a>
               </li>
@@ -101,7 +101,7 @@ export function Visits() {
               maxLength={1000}
               rows={2}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
           </Field>
         </CaptureFlow>
