@@ -145,6 +145,8 @@ export interface Attendance {
   missing_checkout: boolean;
   /** Checked in on an approved work-from-home day, so the office location rule was lifted. */
   is_wfh: boolean;
+  /** The allotted site work this check-in was made under; the office location rule was lifted. */
+  site_assignment_id: string | null;
   /** Minutes between check-in and check-out; null while the day is open. */
   worked_minutes: number | null;
   /** What the day is worth for pay, 0 to 1, fixed at check-out by the rules then in force. */
@@ -192,7 +194,20 @@ export interface Visit {
 }
 
 export type EmployeeLite = Pick<Employee, "id" | "full_name" | "emp_code" | "staff_type">;
-export type AttendanceWithEmployee = Attendance & { employee: EmployeeLite | null };
+export type AttendanceWithEmployee = Attendance & { employee: EmployeeLite | null; site?: { site_name: string } | null };
+
+/** Site work allotted by a manager: on these days the employee checks in from the site, not the office. */
+export interface SiteAssignment {
+  id: string;
+  employee_id: string;
+  from_date: string;
+  to_date: string;
+  site_name: string;
+  details: string | null;
+  status: "active" | "cancelled";
+  created_at: string;
+  employee?: EmployeeLite | null;
+}
 export type VisitWithEmployee = Visit & { employee: EmployeeLite | null };
 
 export const ADMIN_ROLES: Role[] = ["owner", "admin", "hr"];

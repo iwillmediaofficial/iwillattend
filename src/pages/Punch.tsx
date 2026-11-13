@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock, LogIn, LogOut, MapPin, ScanFace } from "lucide-react";
+import { CheckCircle2, Clock, HardHat, LogIn, LogOut, MapPin, ScanFace } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
-import type { Attendance } from "../lib/types";
+import type { Attendance, SiteAssignment } from "../lib/types";
 import { Badge, Button, Card, PageHeader, Spinner } from "../components/ui";
 import { CaptureFlow, type Capture } from "../components/CaptureFlow";
 import { SelfieThumb } from "../components/SelfieThumb";
@@ -22,6 +22,8 @@ export function Punch() {
   const [mode, setMode] = useState<"in" | "out" | null>(null);
   const [missed, setMissed] = useState<string | null>(null);
   const [wfhToday, setWfhToday] = useState(false);
+  // Site work allotted by a manager, today's and upcoming.
+  const [sites, setSites] = useState<SiteAssignment[]>([]);
   // Shown after a punch: what was recorded and whether the face matched.
   const [result, setResult] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -42,6 +44,8 @@ export function Punch() {
     setMissed(r && r.work_date !== today && !r.check_out_at && !stillOpen ? r.work_date : null);
     const { data: w } = await supabase.from("wfh_requests").select("id").eq("employee_id", employee!.id).eq("status", "approved").lte("from_date", today).gte("to_date", today).limit(1);
     setWfhToday(!!w?.length);
+    const { data: s } = await supabase.from("site_assignments").select("*").eq("employee_id", employee!.id).eq("status", "active").gte("to_date", today).order("from_date").limit(5);
+    setSites((s as SiteAssignment[]) ?? []);
     setLoading(false);
   }, [employee, today]);
 
@@ -78,6 +82,7 @@ export function Punch() {
   const isOffice = employee!.staff_type === "office";
   const done = !!row?.check_out_at;
   const openFromEarlier = row && !row.check_out_at && row.work_date !== today;
+  const siteToday = sites.find((s) => s.from_date <= today) ?? null;
 
   return (
     <>
@@ -103,8 +108,10 @@ export function Punch() {
             <Clock className="mx-auto mb-2 h-10 w-10 text-slate-300" />
             <p className="mb-1 text-lg font-semibold">Not checked in yet</p>
             <p className="mb-5 text-sm text-slate-500">
-              {isOffice && wfhToday
-                ? "Work from home is approved for today, so you can check in from anywhere."
+              {siteToday
+                ? `Site work today: ${siteToday.site_name}. You can check in from the site.`
+                : isOffice && wfhToday
+                ?"Work from home is approved for today, so you can check in from anywhere."
                 : isOffice
                 ? branch
                   ? `You must be within ${branch.radius_m} m of ${branch.name}.`
@@ -134,6 +141,7 @@ export function Punch() {
             </div>
             <div className="mb-4 flex flex-wrap justify-center gap-1">
               <AttendanceStatus row={row} />
+              {row.site_assignment_id && <Badge tone="indigo">Site work</Badge>}
               {faceOn && <FaceBadge match={row.check_in_face_match} required={row.face_required} />}
               {faceOn && row.check_out_at && row.check_out_face_match === false && <FaceBadge match={false} />}
             </div>
@@ -171,7 +179,29 @@ export function Punch() {
         )}
       </Card>
 
-      {enrolling && <FaceEnroll onClose={() => setEnrolling(false)} onDone={async () => { await refresh(); setEnrolling(false); }} />}
+      {sites.length > 0 && (
+        <Card className="mx-auto mt-4 max-w-md">
+          <h2 className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 text-sm font-semibold">
+            <HardHat className="h-4 w-4 text-brand-600" /> Your site work
+          </h2>
+          <ul className="divide-y divide-slate-100">
+            {sites.map((s) => (
+              <li key={s.id} className="flex items-start gap-3 px-4 py-3 text-left">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{s.site_name}</p>
+                  <p className="mt-0.5 text-xs text-slate-600">
+                    {fmtDate(s.from_date)}{s.to_date !== s.from_date ? ` to ${fmtDate(s.to_date)}` : ""}
+                  </p>
+                  {s.details && <p className="mt-0.5 text-xs text-slate-500">{s.details}</p>}
+                </div>
+                {s.from_date <= today ? <Badge tone="green">Today</Badge> : <Badge tone="amber">Upcoming</Badge>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {enrolling &&<FaceEnroll onClose={() => setEnrolling(false)} onDone={async () => { await refresh(); setEnrolling(false); }} />}
 
       {mode && (
         <CaptureFlow
