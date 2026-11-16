@@ -88,9 +88,11 @@ export function Signup() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  const [confirm, setConfirm] = useState("");
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (password !== confirm) return setError("The two passwords do not match. Type the same password in both boxes.");
     setBusy(true);
     setError("");
     const { data, error } = await supabase.auth.signUp({
@@ -121,6 +123,15 @@ export function Signup() {
       <form onSubmit={submit} className="space-y-4">
         <Input label="Work email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <PasswordInput label="Password" autoComplete="new-password" required minLength={8} hint="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput
+          label="Confirm password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          hint={confirm && confirm !== password ? "Does not match the password above yet" : undefined}
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+        />
         <ErrorText>{error}</ErrorText>
         <Button type="submit" className="w-full" loading={busy}>
           Create account
