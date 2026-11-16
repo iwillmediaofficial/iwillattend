@@ -1,0 +1,315 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>IWILL Attend brochure (short)</title><style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: "Segoe UI", Arial, sans-serif; color: #0c2e52; font-size: 11.5pt; line-height: 1.45; background: #cbd5e1; }
+.page { width: 210mm; height: 297mm; padding: 17mm 17mm 20mm; position: relative; overflow: hidden; background: #fff; page-break-after: always; break-after: page; margin: 0 auto; }
+svg { flex: none; }
+.kicker { color: #04837f; font-weight: 700; font-size: 10pt; letter-spacing: .14em; text-transform: uppercase; }
+h1 { font-size: 27pt; line-height: 1.15; font-weight: 800; margin: 2mm 0 3mm; letter-spacing: -.01em; }
+.lead { font-size: 12.5pt; color: #475569; max-width: 160mm; margin-bottom: 7mm; }
+h2.sub { font-size: 14pt; font-weight: 700; margin: 7mm 0 3.5mm; }
+h3 { font-size: 12.5pt; font-weight: 700; line-height: 1.25; }
+p { color: #334155; }
+.small { font-size: 10pt; color: #64748b; margin-top: 3mm; }
+footer { position: absolute; left: 17mm; right: 17mm; bottom: 9mm; display: flex; align-items: center; gap: 4mm; border-top: .3mm solid #e2e8f0; padding-top: 3mm; font-size: 9pt; color: #64748b; }
+footer img { height: 6mm; } footer span { flex: 1; text-align: right; } footer b { color: #04837f; font-size: 10pt; }
+
+.ico { display: inline-grid; place-items: center; width: 12mm; height: 12mm; border-radius: 3.2mm; flex: none; }
+.ico.teal { background: #e0f5f4; color: #04837f; } .ico.green { background: #e8f6df; color: #2a8204; } .ico.navy { background: #e3e9f1; color: #0c2e52; } .ico.red { background: #ffe9ec; color: #e11d48; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.grid2.tight { gap: 3.5mm; } .grid2.tight .card { padding: 4mm 5mm; } .grid2.tight .card h3 { margin-top: 2mm; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 7mm; }
+.card { border: .3mm solid #e2e8f0; border-radius: 4mm; padding: 5.5mm 6mm; background: #fff; }
+.card h3 { margin: 3mm 0 1.2mm; } .card p { font-size: 11pt; }
+.note { display: flex; gap: 4mm; align-items: flex-start; background: #f0faf9; border: .3mm solid #bfe8e6; border-radius: 4mm; padding: 4.5mm 5.5mm; margin-top: 7mm; }
+.note p { font-size: 11pt; }
+.badge { display: inline-block; font-size: 7.4pt; font-weight: 600; padding: .5mm 2.2mm; border-radius: 10mm; margin: .4mm .6mm .4mm 0; white-space: nowrap; }
+.badge.g { background: #e8f6df; color: #2a8204; } .badge.t { background: #e0f5f4; color: #04837f; } .badge.a { background: #fef3c7; color: #b45309; } .badge.s { background: #eef2f6; color: #475569; }
+
+/* cover */
+.cover { padding: 0; display: flex; flex-direction: column; background: linear-gradient(180deg, #fff 0, #fff 46%, #f0faf9 100%); }
+.cover-top { padding: 20mm 20mm 0; } .cover-logo { height: 23mm; }
+.cover-tag { margin-top: 5mm; color: #04837f; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 10.5pt; }
+.cover-mid { flex: 1; display: flex; align-items: center; gap: 8mm; padding: 0 20mm; }
+.cover-text h1 { font-size: 35pt; line-height: 1.1; margin-bottom: 6mm; } .cover-text h1 em { font-style: normal; color: #04837f; }
+.cover-text p { font-size: 13.5pt; color: #475569; }
+.cover-points { list-style: none; margin-top: 8mm; } .cover-points li { display: flex; align-items: center; gap: 3.5mm; font-weight: 600; font-size: 12pt; margin-bottom: 3.5mm; } .cover-points svg { color: #04837f; }
+.cover-foot { background: #0c2e52; color: #fff; padding: 9mm 20mm; display: flex; justify-content: space-between; align-items: center; font-size: 11pt; } .cover-foot b { font-size: 15pt; color: #7fe3df; }
+
+/* phone */
+.phone { width: 62mm; flex: none; border: 2.4mm solid #0c2e52; border-radius: 9mm; background: #0c2e52; position: relative; box-shadow: 0 6mm 14mm rgba(12,46,82,.22); }
+.notch { position: absolute; top: 1.2mm; left: 50%; width: 16mm; height: 3mm; margin-left: -8mm; background: #0c2e52; border-radius: 3mm; z-index: 2; }
+.screen { background: #f8fafc; border-radius: 6.6mm; padding: 8mm 4mm 3mm; min-height: 112mm; display: flex; flex-direction: column; }
+.ph-hello { font-weight: 700; font-size: 11pt; color: #0c2e52; } .ph-date { font-size: 8pt; color: #64748b; margin-bottom: 3mm; }
+.ph-card { background: #fff; border: .25mm solid #e2e8f0; border-radius: 3.5mm; padding: 4.5mm 3mm; text-align: center; }
+.ph-face { width: 17mm; height: 17mm; border-radius: 50%; background: #e0f5f4; display: grid; place-items: center; margin: 0 auto 2.5mm; position: relative; }
+.ph-face i { position: absolute; right: -.5mm; bottom: -.5mm; width: 5.2mm; height: 5.2mm; border-radius: 50%; background: #33a101; display: grid; place-items: center; border: .5mm solid #fff; }
+.ph-big { font-weight: 700; font-size: 10.5pt; color: #0c2e52; } .ph-time { font-size: 15pt; font-weight: 800; color: #04837f; margin-bottom: 2mm; }
+.ph-badges { margin-bottom: 3.5mm; }
+.ph-btn { background: #e11d48; color: #fff; font-weight: 600; font-size: 9pt; border-radius: 2.5mm; padding: 2.4mm; display: flex; justify-content: center; align-items: center; gap: 1.5mm; }
+.ph-btn.green { background: #2a8204; margin-top: auto; }
+.ph-nav { margin-top: auto; display: flex; justify-content: space-between; border-top: .25mm solid #e2e8f0; padding-top: 2mm; }
+.ph-nav span { display: flex; flex-direction: column; align-items: center; font-size: 5.8pt; color: #64748b; gap: .5mm; } .ph-nav .on { color: #04837f; font-weight: 700; }
+.ph-cam { background: #0c2e52; border-radius: 3.5mm; height: 62mm; display: grid; place-items: center; margin-bottom: 3mm; }
+.ph-ring { width: 40mm; height: 48mm; border: .8mm dashed #33d6a0; border-radius: 50%; display: grid; place-items: center; }
+.how .screen { min-height: 0; } .how .ph-cam { height: 44mm; } .how .ph-ring { width: 30mm; height: 36mm; } .how .ph-ring svg { width: 46px; height: 46px; }
+.how + h2.sub { margin-top: 5mm; }
+.ph-loc { display: flex; align-items: center; gap: 1.5mm; font-size: 7.6pt; color: #04837f; font-weight: 600; background: #e0f5f4; border-radius: 2.5mm; padding: 2mm 2.5mm; margin-bottom: 3mm; }
+
+/* problems */
+.pains { display: grid; gap: 4mm; }
+.pain { display: flex; align-items: center; gap: 5mm; border: .3mm solid #e2e8f0; border-radius: 4mm; padding: 4.5mm 6mm; }
+.pain .num { font-size: 20pt; font-weight: 800; color: #cbd5e1; width: 8mm; } .pain p { font-size: 11pt; margin-top: .8mm; }
+.band { margin-top: 8mm; background: linear-gradient(100deg, #04837f, #0c2e52); border-radius: 5mm; padding: 7mm 8mm; display: flex; align-items: center; gap: 6mm; }
+.band p { color: #fff; font-size: 14pt; line-height: 1.35; } .band b { color: #b8f4c8; }
+
+/* how */
+.how { display: flex; gap: 9mm; align-items: center; }
+.steps { flex: 1; display: grid; gap: 6mm; }
+.step { display: flex; gap: 5mm; } .step > span { flex: none; width: 11mm; height: 11mm; border-radius: 50%; background: #04837f; color: #fff; font-weight: 800; font-size: 14pt; display: grid; place-items: center; }
+.step p { font-size: 11pt; margin-top: 1mm; }
+.dash { border: .3mm solid #e2e8f0; border-radius: 4mm; overflow: hidden; }
+.dash-top { background: #0c2e52; color: #fff; display: flex; justify-content: space-between; padding: 2.6mm 5mm; font-size: 10pt; } .dash-top span { color: #9fd9d6; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; padding: 3.5mm 5mm; background: #f8fafc; }
+.tiles div { background: #fff; border: .25mm solid #e2e8f0; border-radius: 2.5mm; padding: 2mm 3mm; } .tiles small { display: block; font-size: 8pt; color: #64748b; } .tiles b { font-size: 15pt; }
+.tiles .g { color: #2a8204; } .tiles .r { color: #e11d48; } .tiles .a { color: #d97706; }
+.dash table { width: 100%; border-collapse: collapse; font-size: 9.5pt; } .dash th { text-align: left; font-size: 8pt; color: #64748b; font-weight: 600; padding: 1.8mm 5mm; background: #f8fafc; border-top: .25mm solid #e2e8f0; }
+.dash td { padding: 2mm 5mm; border-top: .25mm solid #eef2f6; vertical-align: middle; } .dash td small { display: block; font-size: 7.6pt; color: #64748b; margin-left: 9mm; margin-top: -1mm; }
+.av { display: inline-grid; place-items: center; width: 7mm; height: 7mm; border-radius: 50%; background: #e0f5f4; color: #04837f; font-weight: 700; font-size: 9pt; margin-right: 2mm; vertical-align: middle; }
+
+/* rules table */
+table.rules { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10.3pt; border: .3mm solid #e2e8f0; border-radius: 4mm; overflow: hidden; }
+.rules th { background: #0c2e52; color: #fff; padding: 3mm 4mm; text-align: left; font-size: 11pt; } .rules th:nth-child(3) { background: #04837f; }
+.rules td { padding: 2.8mm 4mm; border-top: .25mm solid #e2e8f0; vertical-align: top; color: #334155; } .rules td:first-child { font-weight: 700; color: #0c2e52; width: 36mm; background: #f8fafc; }
+
+/* payroll */
+.flow { display: flex; align-items: center; justify-content: space-between; background: #f0faf9; border-radius: 5mm; padding: 6mm 8mm; margin-bottom: 7mm; }
+.flow div { text-align: center; flex: 1; } .flow b { display: block; font-size: 12pt; margin-top: 1mm; } .flow small { color: #64748b; font-size: 9.5pt; }
+.split { display: flex; gap: 8mm; align-items: flex-start; }
+.ticks { list-style: none; flex: 1; } .ticks li { display: flex; gap: 3mm; margin-bottom: 4mm; font-size: 11pt; color: #334155; } .ticks svg { margin-top: .8mm; } .ticks b { color: #0c2e52; }
+.slip { width: 68mm; flex: none; border: .3mm solid #cbd5e1; border-radius: 4mm; overflow: hidden; box-shadow: 0 4mm 10mm rgba(12,46,82,.12); }
+.slip-top { background: #0c2e52; color: #fff; padding: 3.5mm 4.5mm; font-size: 10pt; } .slip-top span { display: block; color: #9fd9d6; font-size: 9pt; }
+.slip-rows { padding: 2mm 4.5mm; } .slip-rows p { display: flex; justify-content: space-between; font-size: 9.6pt; padding: 1.7mm 0; border-bottom: .25mm dashed #e2e8f0; } .slip-rows b { color: #0c2e52; }
+.slip-net { display: flex; justify-content: space-between; align-items: center; background: #e8f6df; padding: 3mm 4.5mm; font-weight: 700; } .slip-net b { font-size: 14pt; color: #2a8204; }
+.slip-note { font-size: 7.6pt; color: #94a3b8; text-align: center; padding: 1.6mm; }
+
+/* why */
+table.ba { width: 100%; border-collapse: separate; border-spacing: 0; border: .3mm solid #e2e8f0; border-radius: 4mm; overflow: hidden; margin-top: 4mm; }
+.ba th { width: 50%; padding: 3mm 5mm; text-align: left; font-size: 11.5pt; } .ba th:first-child { background: #fff1f2; color: #be123c; } .ba th:last-child { background: #e8f6df; color: #2a8204; }
+.ba td { padding: 3.2mm 5mm; border-top: .25mm solid #e2e8f0; font-size: 11pt; vertical-align: top; } .ba td svg { vertical-align: -0.6mm; margin-right: 2.5mm; } .ba td:first-child { color: #64748b; } .ba td:last-child { font-weight: 600; background: #fbfef9; }
+.ba td { display: table-cell; } .ba td span { display: inline; }
+.ba.compact { margin-top: 6mm; } .ba.compact td { padding: 2.4mm 5mm; font-size: 10.5pt; }
+.who { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3.5mm; } .who.four { grid-template-columns: repeat(4, 1fr); }
+.who div { display: flex; align-items: center; gap: 3mm; border: .3mm solid #e2e8f0; border-radius: 3.5mm; padding: 3.5mm 4mm; font-weight: 600; font-size: 10.5pt; line-height: 1.25; }
+.fact { background: #0c2e52; border-radius: 4mm; padding: 5mm; text-align: center; } .fact b { display: block; color: #7fe3df; font-size: 16pt; } .fact span { color: #dbe7f3; font-size: 9.8pt; }
+
+/* plans */
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; align-items: stretch; margin-top: 2mm; }
+.plan { border: .3mm solid #e2e8f0; border-radius: 5mm; padding: 6mm 5.5mm; position: relative; background: #fff; }
+.plan.featured { border: .7mm solid #04837f; background: #f7fdfc; }
+.pop { position: absolute; top: -3.2mm; left: 5.5mm; background: #04837f; color: #fff; font-size: 8pt; font-weight: 700; padding: .8mm 3mm; border-radius: 10mm; }
+.price { font-size: 25pt; font-weight: 800; color: #0c2e52; line-height: 1.2; margin-top: 1mm; } .price small { font-size: 10pt; font-weight: 400; color: #64748b; }
+.staff { font-size: 11pt; margin: 1mm 0 3.5mm; } .plan ul { list-style: none; font-size: 9.8pt; color: #334155; } .plan li { margin-bottom: 1.6mm; display: flex; gap: 2mm; align-items: center; }
+.best { margin-top: 3.5mm; padding-top: 3mm; border-top: .25mm solid #e2e8f0; font-size: 9.8pt; color: #64748b; }
+.trial { display: flex; align-items: center; gap: 3mm; justify-content: center; margin-top: 5mm; font-size: 11.5pt; } .trial b { color: #04837f; }
+.start { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; }
+.start div { background: #f8fafc; border-radius: 4mm; padding: 4mm; } .start span { display: grid; place-items: center; width: 8mm; height: 8mm; border-radius: 50%; background: #04837f; color: #fff; font-weight: 800; margin-bottom: 2mm; } .start p { font-size: 10.3pt; font-weight: 600; color: #0c2e52; line-height: 1.3; }
+.cta { margin-top: 8mm; background: linear-gradient(100deg, #0c2e52, #04837f); border-radius: 5mm; padding: 8mm 9mm; display: flex; align-items: center; justify-content: space-between; gap: 6mm; }
+.cta-small { color: #dbe7f3; font-size: 10.5pt; } .cta-big { color: #fff; font-size: 24pt; font-weight: 800; line-height: 1.3; }
+.cta img { height: 15mm; background: #fff; border-radius: 3mm; padding: 2.5mm 4mm; }
+@media screen { .page { margin: 6mm auto; box-shadow: 0 2mm 8mm rgba(0,0,0,.2); } }
+</style></head><body>
+<section class="page cover">
+  <div class="cover-top">
+    <img class="cover-logo" src="../public/logo.png" alt="IWILL Attend">
+    <p class="cover-tag">Selfie + location attendance, with payroll</p>
+  </div>
+  <div class="cover-mid">
+    <div class="cover-text">
+      <h1>Attendance you can trust.<br><em>Payroll that follows.</em></h1>
+      <p>Your staff mark attendance with a selfie on their own phone. You see who came, when and from where, and salary is worked out for you.</p>
+      <ul class="cover-points">
+        <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg> Works on any phone. No app to install.</li>
+        <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-fingerprint-pattern lucide-fingerprint" aria-hidden="true"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"></path><path d="M14 13.12c0 2.38 0 6.38-1 8.88"></path><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"></path><path d="M2 12a10 10 0 0 1 18-6"></path><path d="M2 16h.01"></path><path d="M21.8 16c.2-2 .131-5.354 0-6"></path><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"></path><path d="M8.65 22c.21-.66.45-1.32.57-2"></path><path d="M9 6.8a6 6 0 0 1 9 5.2v2"></path></svg> No attendance machine to buy.</li>
+        <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-timer" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"></line><line x1="12" x2="15" y1="14" y2="11"></line><circle cx="12" cy="14" r="8"></circle></svg> Ready to use in about 10 minutes.</li>
+      </ul>
+    </div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+  <p class="ph-hello">Hello, Anu</p>
+  <p class="ph-date">Monday, 16 November</p>
+  <div class="ph-card">
+    <div class="ph-face"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#04837f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round lucide-user-2" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg><i><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></i></div>
+    <p class="ph-big">Checked in</p>
+    <p class="ph-time">9:02 AM</p>
+    <div class="ph-badges"><span class="badge g">On time</span><span class="badge g">Face matched</span><span class="badge t">At office · 12 m</span></div>
+    <div class="ph-btn"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out" aria-hidden="true"><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path></svg> Check out</div>
+  </div>
+  <div class="ph-nav"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-fingerprint-pattern lucide-fingerprint" aria-hidden="true"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"></path><path d="M14 13.12c0 2.38 0 6.38-1 8.88"></path><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"></path><path d="M2 12a10 10 0 0 1 18-6"></path><path d="M2 16h.01"></path><path d="M21.8 16c.2-2 .131-5.354 0-6"></path><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"></path><path d="M8.65 22c.21-.66.45-1.32.57-2"></path><path d="M9 6.8a6 6 0 0 1 9 5.2v2"></path></svg>Attendance</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-clock" aria-hidden="true"><path d="M16 14v2.2l1.6 1"></path><path d="M16 2v3"></path><path d="M21 7.338V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2.338"></path><path d="M3 9h5.859"></path><path d="M8 2v3"></path><circle cx="16" cy="16" r="6"></circle></svg>History</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tree-palm lucide-palmtree" aria-hidden="true"><path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4"></path><path d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3"></path><path d="M5.89 9.71c-2.15 2.15-2.3 5.47-.35 7.43l4.24-4.25.7-.7.71-.71 2.12-2.12c-1.95-1.96-5.27-1.8-7.42.35"></path><path d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14"></path></svg>Leave</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-receipt-text" aria-hidden="true"><path d="M13 16H8"></path><path d="M14 8H8"></path><path d="M16 12H8"></path><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"></path></svg>Payslips</span></div></div></div>
+  </div>
+  <div class="cover-foot"><span>For shops, offices, clinics, contractors and field teams</span><b>www.iwillattend.in</b></div>
+</section>
+<section class="page">
+  
+  <p class="kicker">How it works</p>
+  <h1>Attendance by selfie, in three steps</h1>
+  <p class="lead">No register, no punch card, no machine. Only the phone your staff already carry.</p>
+  <div class="how">
+    <div class="steps">
+      <div class="step"><span>1</span><div><h3>Staff open the website on their phone</h3><p>They sign in with the login you give them. Nothing to install.</p></div></div><div class="step"><span>2</span><div><h3>They take a selfie to check in and out</h3><p>The time and the place are recorded with the photo.</p></div></div><div class="step"><span>3</span><div><h3>You see everything, live</h3><p>Who is in, who is late, who is on leave, and where each person checked in.</p></div></div>
+    </div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+  <p class="ph-hello">Check in</p>
+  <p class="ph-date">Look at the camera</p>
+  <div class="ph-cam"><div class="ph-ring"><svg xmlns="http://www.w3.org/2000/svg" width="62" height="62" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round lucide-user-2" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg></div></div>
+  <div class="ph-loc"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#04837f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> Location found · within 9 m</div>
+  <div class="ph-btn green"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera" aria-hidden="true"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg> Take selfie</div></div></div>
+  </div>
+  <h2 class="sub">Problems it ends</h2>
+  <div class="who four">
+    <div><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg><span>Attendance marked for a friend</span></div><div><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-off" aria-hidden="true"><path d="M12.75 7.09a3 3 0 0 1 2.16 2.16"></path><path d="M17.072 17.072c-1.634 2.17-3.527 3.912-4.471 4.727a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 1.432-4.568"></path><path d="m2 2 20 20"></path><path d="M8.475 2.818A8 8 0 0 1 20 10c0 1.183-.31 2.377-.81 3.533"></path><path d="M9.13 9.13a3 3 0 0 0 3.74 3.74"></path></svg><span>Unchecked field visits</span></div><div><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-spreadsheet" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M8 13h2"></path><path d="M14 13h2"></path><path d="M8 17h2"></path><path d="M14 17h2"></path></svg><span>Register and Excel mistakes</span></div><div><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-messages-square" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"></path></svg><span>Salary day arguments</span></div>
+  </div>
+  <h2 class="sub">What the owner sees</h2>
+  
+  <div class="dash">
+    <div class="dash-top"><b>Dashboard</b><span>Today</span></div>
+    <div class="tiles">
+      <div><small>Active staff</small><b>24</b></div>
+      <div><small>Checked in</small><b class="g">21</b></div>
+      <div><small>Not in yet</small><b class="r">3</b></div>
+      <div><small>Late</small><b class="a">2</b></div>
+    </div>
+    <table>
+      <tr><th>Employee</th><th>In</th><th>Status</th></tr>
+      
+  <tr><td><span class="av">A</span><b>Anu Thomas</b><small>Office staff</small></td><td>9:02 AM</td><td><span class="badge g">On time</span><span class="badge t">At office</span></td></tr>
+  <tr><td><span class="av">F</span><b>Fathima K</b><small>Office staff</small></td><td>9:41 AM</td><td><span class="badge a">Late 26 min</span><span class="badge t">At office</span></td></tr>
+    </table>
+  </div>
+  <footer><img src="../public/logo.png" alt=""><span>www.iwillattend.in</span><b>02</b></footer>
+</section>
+<section class="page">
+  
+  <p class="kicker">Features</p>
+  <h1>Everything from check-in to payslip</h1>
+  
+  <div class="grid2 tight">
+    
+  <div class="card">
+    <span class="ico teal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera" aria-hidden="true"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg></span>
+    <h3>Selfie + location check-in</h3>
+    <p>A live photo, the time and the place, every time.</p>
+  </div>
+    
+  <div class="card">
+    <span class="ico teal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></span>
+    <h3>Office boundary</h3>
+    <p>Office staff can check in only at the office.</p>
+  </div>
+    
+  <div class="card">
+    <span class="ico green"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scan-face" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><path d="M9 9h.01"></path><path d="M15 9h.01"></path></svg></span>
+    <h3>Face match</h3>
+    <p>A selfie that does not match is flagged to the manager.</p>
+  </div>
+    
+  <div class="card">
+    <span class="ico green"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pinned" aria-hidden="true"><path d="M18 8c0 3.613-3.869 7.429-5.393 8.795a1 1 0 01-1.214 0C9.87 15.429 6 11.613 6 8a6 6 0 0112 0"></path><path d="M4.474 15h-.197a1 1 0 00-.969.753l-1.097 4.35a1.5 1.5 0 001.444 1.898L20.344 22a1.5 1.5 0 001.446-1.897l-1.098-4.35a1 1 0 00-.969-.753h-.197"></path><circle cx="12" cy="8" r="2"></circle></svg></span>
+    <h3>Field staff and site work</h3>
+    <p>Check in from the field, log client visits, allot site work.</p>
+  </div>
+    
+  <div class="card">
+    <span class="ico navy"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tree-palm lucide-palmtree" aria-hidden="true"><path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4"></path><path d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3"></path><path d="M5.89 9.71c-2.15 2.15-2.3 5.47-.35 7.43l4.24-4.25.7-.7.71-.71 2.12-2.12c-1.95-1.96-5.27-1.8-7.42.35"></path><path d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14"></path></svg></span>
+    <h3>Leave, shifts and holidays</h3>
+    <p>Leave requests, late marks, weekly offs and holidays.</p>
+  </div>
+    
+  <div class="card">
+    <span class="ico navy"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-up" aria-hidden="true"><path d="M16 7h6v6"></path><path d="m22 7-8.5 8.5-5-5L2 17"></path></svg></span>
+    <h3>Your day rules and overtime</h3>
+    <p>Choose how full day, half day and overtime are counted.</p>
+  </div>
+    
+  <div class="card">
+    <span class="ico teal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calculator" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"></rect><line x1="8" x2="16" y1="6" y2="6"></line><line x1="16" x2="16" y1="14" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg></span>
+    <h3>Payroll and payslips</h3>
+    <p>Salary from attendance, with PF, ESI, professional tax and TDS. Payslips on the phone.</p>
+  </div>
+    
+  <div class="card">
+    <span class="ico teal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+    <h3>Private and safe</h3>
+    <p>Each company's data is kept separate. Selfies are stored privately.</p>
+  </div>
+  </div>
+  <table class="ba compact">
+    <tr><th>Today</th><th>With IWILL Attend</th></tr>
+    <tr><td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg><span>Days of counting at month end</span></td><td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>The monthly sheet is ready when the month ends</span></td></tr><tr><td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg><span>Disputes with no record to check</span></td><td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>A clear record both sides can see</span></td></tr><tr><td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg><span>A costly machine in one place</span></td><td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>Nothing to buy. Works at every branch and site</span></td></tr>
+  </table>
+  <footer><img src="../public/logo.png" alt=""><span>www.iwillattend.in</span><b>03</b></footer>
+</section>
+<section class="page">
+  
+  <p class="kicker">Plans</p>
+  <h1>Simple pricing. Start free.</h1>
+  <p class="lead">Every plan has every feature. You pay only for the size of your team.</p>
+  <div class="plans">
+    
+  <div class="plan ">
+    
+    <h3>Free</h3>
+    <p class="price">₹0<small> / month</small></p>
+    <p class="staff">Up to <b>5</b> employees</p>
+    <ul>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Selfie + location attendance</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Field visits, shifts and leave</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Payroll and payslips</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Face match</li>
+    </ul>
+    <p class="best">For a small shop or a trial run</p>
+  </div>
+    
+  <div class="plan featured">
+    <span class="pop">Most popular</span>
+    <h3>Standard</h3>
+    <p class="price">₹999<small> / month</small></p>
+    <p class="staff">Up to <b>50</b> employees</p>
+    <ul>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Selfie + location attendance</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Field visits, shifts and leave</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Payroll and payslips</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Face match</li>
+    </ul>
+    <p class="best">For most shops, offices and clinics</p>
+  </div>
+    
+  <div class="plan ">
+    
+    <h3>Premium</h3>
+    <p class="price">₹2,499<small> / month</small></p>
+    <p class="staff">Up to <b>500</b> employees</p>
+    <ul>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Selfie + location attendance</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Field visits, shifts and leave</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Payroll and payslips</li>
+      <li><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33a101" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg> Face match</li>
+    </ul>
+    <p class="best">For larger teams and many branches</p>
+  </div>
+  </div>
+  <p class="trial"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#04837f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gift" aria-hidden="true"><path d="M12 7v14"></path><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"></path><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"></path><rect x="3" y="7" width="18" height="4" rx="1"></rect></svg><span>Paid plans start with a <b>14-day free trial</b>. No card needed.</span></p>
+  <h2 class="sub">Start in about 10 minutes</h2>
+  <div class="start">
+    <div><span>1</span><p>Register your company on the website</p></div><div><span>2</span><p>Mark your office on the map</p></div><div><span>3</span><p>Add your staff and give them their login</p></div><div><span>4</span><p>Staff check in with a selfie</p></div>
+  </div>
+  <div class="cta">
+    <div>
+      <p class="cta-small">Try it today</p>
+      <p class="cta-big">www.iwillattend.in</p>
+      <p class="cta-small">Open this address on your phone or computer and tap “Start free”.</p>
+    </div>
+    <img src="../public/logo.png" alt="IWILL Attend">
+  </div>
+  <footer><img src="../public/logo.png" alt=""><span>www.iwillattend.in</span><b>04</b></footer>
+</section><script>const p=new URLSearchParams(location.search).get("p");if(p){document.querySelectorAll(".page").forEach((e,i)=>{if(i+1!=p)e.remove()});document.body.style.background="#fff";document.querySelector(".page").style.margin="0";document.querySelector(".page").style.boxShadow="none"}</script></body></html>
