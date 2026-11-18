@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapPin } from "lucide-react";
+import { LogIn, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 import type { AttendanceWithEmployee, Branch, EmployeeLite, VisitWithEmployee } from "../lib/types";
@@ -17,10 +18,10 @@ interface Data {
   branches: Branch[];
 }
 
-const EMP = "employee:employees(id, full_name, emp_code, staff_type)";
+const EMP = "employee:employees!employee_id(id, full_name, emp_code, staff_type)";
 
 export function Dashboard() {
-  const { org } = useAuth();
+  const { org, employee: me } = useAuth();
   const faceOn = org!.face_check_enabled;
   const tz = org!.timezone;
   const [date, setDate] = useState(todayIn(tz));
@@ -91,6 +92,8 @@ export function Dashboard() {
     data.attendance.filter((a) => faceFlagged(a.check_in_face_match, a.face_required)).length +
     data.attendance.filter((a) => a.check_out_at && faceFlagged(a.check_out_face_match, a.face_required)).length +
     data.visits.filter((v) => faceFlagged(v.face_match, v.face_required)).length;
+  const byManager = data.attendance.filter((a) => a.check_in_by || a.check_out_by).length;
+  const canCheckInStaff = org!.staff_checkin_enabled && date === todayIn(tz);
   const stats = [
     { label: "Active staff", value: data.employees.length, cls: "text-navy-900" },
     { label: "Checked in", value: data.attendance.length, cls: "text-success-600" },
@@ -115,6 +118,12 @@ export function Dashboard() {
       {faceOn && mismatches > 0 && (
         <p className="mb-5 rounded-lg bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
           {mismatches} punch{mismatches === 1 ? "" : "es"} on this day did not match the registered face, or were not checked against it. Check the selfies below.
+        </p>
+      )}
+
+      {byManager > 0 && (
+        <p className="mb-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+          {byManager} attendance record{byManager === 1 ? " was" : "s were"} checked in or out by a manager on this day. Look for the "by" badges below, or filter them in Reports.
         </p>
       )}
 
@@ -210,9 +219,14 @@ export function Dashboard() {
           ) : (
             <ul className="divide-y divide-slate-100">
               {absent.map((e) => (
-                <li key={e.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                  <span>{e.full_name}</span>
+                <li key={e.id} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
+                  <span className="min-w-0 flex-1 truncate">{e.full_name}</span>
                   <Badge>{e.staff_type}</Badge>
+                  {canCheckInStaff && e.id !== me!.id && (
+                    <Link to={`/staff-checkin?emp=${e.id}`} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50">
+                      <LogIn className="h-3.5 w-3.5" /> Check in
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

@@ -29,6 +29,7 @@ export function CaptureFlow({
   onClose,
   onConfirm,
   face = false,
+  subject,
   children,
 }: {
   title: string;
@@ -37,6 +38,8 @@ export function CaptureFlow({
   onConfirm: (c: Capture) => Promise<void>;
   /** Require a detectable face in the selfie and return its template. */
   face?: boolean;
+  /** A manager checking someone else in: the selfie is of this person and is compared with their face. */
+  subject?: { id: string; name: string };
   children?: ReactNode;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -78,7 +81,7 @@ export function CaptureFlow({
       setCamError("Camera is not available. Open this site over HTTPS (or localhost) in a modern browser.");
     } else {
       navigator.mediaDevices
-        .getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 640 } }, audio: false })
+        .getUserMedia({ video: { facingMode: { ideal: subject ? "environment" : "user" }, width: { ideal: 640 }, height: { ideal: 640 } }, audio: false })
         .then((stream) => {
           if (cancelled) {
             stream.getTracks().forEach((t) => t.stop());
@@ -143,7 +146,9 @@ export function CaptureFlow({
       }
       descriptor = d;
       // Ask the server to compare, so the result is shown before confirming.
-      const { data, error: checkError } = await supabase.rpc("check_face", { p_descriptor: d });
+      const { data, error: checkError } = subject
+        ? await supabase.rpc("check_face_for", { p_employee: subject.id, p_descriptor: d })
+        : await supabase.rpc("check_face", { p_descriptor: d });
       setChecking(false);
       if (checkError) {
         setVerdict("unchecked");
@@ -176,9 +181,9 @@ export function CaptureFlow({
             playsInline
             muted
             onLoadedData={() => setCamReady(true)}
-            className={`h-full w-full -scale-x-100 object-cover ${shot ? "hidden" : ""}`}
+            className={`h-full w-full ${subject ? "" : "-scale-x-100"} object-cover ${shot ? "hidden" : ""}`}
           />
-          {shot && <img src={shot.url} alt="Your selfie" className="h-full w-full -scale-x-100 object-cover" />}
+          {shot && <img src={shot.url} alt={subject ? `Selfie of ${subject.name}` : "Your selfie"} className={`h-full w-full ${subject ? "" : "-scale-x-100"} object-cover`} />}
           {!camReady && !camError && <p className="absolute inset-0 grid place-items-center text-sm text-slate-300">Starting camera…</p>}
           {!shot && guide && (
             <p aria-live="polite" className={`absolute inset-x-0 bottom-0 py-1.5 text-center text-sm font-medium text-white ${guide === "ok" ? "bg-success-600/85" : "bg-amber-600/85"}`}>
@@ -187,6 +192,11 @@ export function CaptureFlow({
           )}
         </div>
         <ErrorText>{camError}</ErrorText>
+        {subject && !shot && (
+          <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">
+            Point the camera at <b>{subject.name}</b> and take a clear photo of their face. The back camera is used when the phone has one.
+          </p>
+        )}
 
         {shot && verdict === "matched" && (
           <p role="status" className="flex items-center gap-2 rounded-lg bg-success-50 px-3 py-2 text-sm font-medium text-success-700">
@@ -196,13 +206,13 @@ export function CaptureFlow({
         {shot && verdict === "mismatch" && (
           <p role="alert" className="flex items-start gap-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
             <CircleAlert className="mt-0.5 h-5 w-5 shrink-0" />
-            <span><b>Face does not match your registered face.</b> Retake in better light, facing the camera. If you continue, this will be flagged to your manager.</span>
+            <span><b>Face does not match {subject ? `${subject.name}'s` : "your"} registered face.</b> Retake in better light, facing the camera. If you continue, this will be flagged{subject ? " for review" : " to your manager"}.</span>
           </p>
         )}
         {shot && verdict === "unchecked" && (
           <p role="status" className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
             <CircleAlert className="mt-0.5 h-5 w-5 shrink-0" />
-            <span>Your face could not be checked here. {verdictNote}</span>
+            <span>{subject ? "The face" : "Your face"} could not be checked here. {verdictNote}</span>
           </p>
         )}
 

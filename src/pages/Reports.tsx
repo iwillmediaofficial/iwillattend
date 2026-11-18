@@ -19,6 +19,7 @@ export function Reports() {
   const [from, setFrom] = useState(today.slice(0, 8) + "01");
   const [to, setTo] = useState(today);
   const [empId, setEmpId] = useState("");
+  const [markedOnly, setMarkedOnly] = useState(false);
   const [employees, setEmployees] = useState<EmployeeLite[]>([]);
   const [rows, setRows] = useState<AttendanceWithEmployee[] | null>(null);
 
@@ -37,20 +38,21 @@ export function Reports() {
     fetchAll<AttendanceWithEmployee>(() => {
       const q = supabase
         .from("attendance")
-        .select("*, employee:employees(id, full_name, emp_code, staff_type)")
+        .select("*, employee:employees!employee_id(id, full_name, emp_code, staff_type)")
         .gte("work_date", from)
         .lte("work_date", to)
         .order("work_date", { ascending: false })
         .order("check_in_at")
         .order("id");
-      return (empId ? q.eq("employee_id", empId) : q) as never;
+      const q2 = markedOnly ? q.or("check_in_by.not.is.null,check_out_by.not.is.null") : q;
+      return (empId ? q2.eq("employee_id", empId) : q2) as never;
     })
       .then((data) => alive && setRows(data))
       .catch(() => alive && setRows([]));
     return () => {
       alive = false;
     };
-  }, [from, to, empId]);
+  }, [from, to, empId, markedOnly]);
 
   const summary = useMemo(() => {
     const m = new Map<string, { name: string; code: string; days: number; hours: number; open: number }>();
@@ -68,7 +70,7 @@ export function Reports() {
   const exportCsv = () => {
     if (!rows) return;
     downloadCsv(`attendance_${from}_to_${to}.csv`, [
-      ["Date", "Employee", "Code", "Staff type", "Status", "Day value", "Late minutes", "Corrected", "Face at check-in", "Face at check-out", "Failed face attempts", "Check in", "Check out", "Hours", "In geofence", "Distance from branch (m)", "Check-in latitude", "Check-in longitude"],
+      ["Date", "Employee", "Code", "Staff type", "Status", "Day value", "Late minutes", "Corrected", "Face at check-in", "Face at check-out", "Failed face attempts", "Check in", "Check out", "Hours", "In geofence", "Distance from branch (m)", "Check-in latitude", "Check-in longitude", "Checked in by", "Checked out by"],
       ...rows.map((r) => {
         const h = hoursBetween(r.check_in_at, r.check_out_at);
         return [
@@ -90,6 +92,8 @@ export function Reports() {
           r.check_in_distance_m == null ? "" : Math.round(r.check_in_distance_m),
           r.check_in_lat,
           r.check_in_lng,
+          r.check_in_by_name ?? "",
+          r.check_out_by_name ?? "",
         ];
       }),
     ]);
@@ -126,6 +130,9 @@ export function Reports() {
               </option>
             ))}
           </select>
+        </label>
+        <label className="flex items-center gap-2 self-end pb-2 text-sm text-slate-700">
+          <input type="checkbox" checked={markedOnly} onChange={(e) => setMarkedOnly(e.target.checked)} /> Only punches made by a manager
         </label>
       </div>
 

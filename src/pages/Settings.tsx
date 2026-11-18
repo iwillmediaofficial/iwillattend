@@ -83,6 +83,8 @@ export function Settings() {
     await refresh();
   };
 
+  const toggleStaffCheckin = () => setOrgRule({ staff_checkin_enabled: !org!.staff_checkin_enabled });
+
   const saveShift = async (e: FormEvent) => {
     e.preventDefault();
     if (!shiftForm) return;
@@ -268,6 +270,15 @@ export function Settings() {
             <option key={m} value={m}>{m >= 1000 ? `${m / 1000} km` : `${m} m`} or better{m === 5000 ? " (effectively off)" : ""}</option>
           ))}
         </Select>
+      </Card>
+
+      <Card className="mb-5 p-4">
+        <h2 className="mb-2 text-sm font-semibold">Checking in staff</h2>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" className="mt-0.5" checked={org!.staff_checkin_enabled} disabled={!canEditOrg} onChange={toggleStaffCheckin} />
+          <span>Allow owners, admins, HR and managers to check staff in and out (for example when a phone is dead, or for a crew at a site)</span>
+        </label>
+        <p className="mt-2 text-xs text-slate-500">A live selfie of the staff member and the location are still required, and the office area, face check and all other rules apply. Every such punch shows who made it, on the dashboard, in reports and in the employee's own history.{canEditOrg ? "" : " Only the owner or an admin can change this."}</p>
       </Card>
 
       <Card className="mb-5 p-4">

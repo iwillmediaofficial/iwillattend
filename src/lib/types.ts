@@ -15,6 +15,8 @@ export interface Organization {
   state: string | null;
   gstin: string | null;
   face_check_enabled: boolean;
+  /** Owner, Admin, HR and Manager may check staff in and out with the staff member's selfie. */
+  staff_checkin_enabled: boolean;
   /** How a past day with no check-out is paid. */
   missing_checkout_as: "half_day" | "full_day" | "absent";
   /** Weekly offs and holidays between unpaid absences are not paid. */
@@ -147,6 +149,11 @@ export interface Attendance {
   is_wfh: boolean;
   /** The allotted site work this check-in was made under; the office location rule was lifted. */
   site_assignment_id: string | null;
+  /** Set when a manager checked this person in or out on their behalf. */
+  check_in_by: string | null;
+  check_in_by_name: string | null;
+  check_out_by: string | null;
+  check_out_by_name: string | null;
   /** Minutes between check-in and check-out; null while the day is open. */
   worked_minutes: number | null;
   /** What the day is worth for pay, 0 to 1, fixed at check-out by the rules then in force. */

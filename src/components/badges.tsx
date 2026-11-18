@@ -2,7 +2,9 @@ import type { Attendance, RequestStatus } from "../lib/types";
 import { Badge } from "./ui";
 import { describeDayValue } from "../lib/dayRule";
 
-export function AttendanceStatus({ row }: { row: Pick<Attendance, "status" | "late_minutes" | "is_corrected" | "missing_checkout" | "day_value" | "ot_minutes" | "ot_status"> }) {
+export function AttendanceStatus({ row }: { row: Pick<Attendance, "status" | "late_minutes" | "is_corrected" | "missing_checkout" | "day_value" | "ot_minutes" | "ot_status"> & Partial<Pick<Attendance, "check_in_by_name" | "check_out_by_name">> }) {
+  const inBy = row.check_in_by_name;
+  const outBy = row.check_out_by_name;
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       {row.status === "late" ? (
@@ -21,6 +23,14 @@ export function AttendanceStatus({ row }: { row: Pick<Attendance, "status" | "la
       )}
       {row.missing_checkout && <Badge tone="red">Missing check-out</Badge>}
       {row.is_corrected && <Badge tone="indigo">Corrected</Badge>}
+      {inBy && outBy && inBy === outBy ? (
+        <Badge tone="amber">In and out by {inBy}</Badge>
+      ) : (
+        <>
+          {inBy && <Badge tone="amber">Checked in by {inBy}</Badge>}
+          {outBy && <Badge tone="amber">Checked out by {outBy}</Badge>}
+        </>
+      )}
     </span>
   );
 }

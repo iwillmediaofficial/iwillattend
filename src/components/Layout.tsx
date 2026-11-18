@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { Building2, CalendarClock, ClipboardCheck, CreditCard, FileBarChart, Fingerprint, FolderArchive, FolderOpen, Globe, HardHat, House, IndianRupee, KeyRound, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCheck, CreditCard, FileBarChart, Fingerprint, FolderArchive, FolderOpen, Globe, HardHat, House, IndianRupee, KeyRound, UserCheck, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import type { Subscription } from "../lib/types";
 import { addDays, fmtDate, todayIn } from "../lib/utils";
@@ -42,6 +42,7 @@ export function Layout() {
     { to: "/my-items", label: "My items", icon: FolderOpen, show: staff && !isManager },
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: isManager },
     { to: "/approvals", label: "Approvals", icon: ClipboardCheck, show: isManager },
+    { to: "/staff-checkin", label: "Check in staff", icon: UserCheck, show: isManager && !!org?.staff_checkin_enabled },
     { to: "/site-work", label: "Site work", icon: HardHat, show: isManager },
     { to: "/assets", label: "Assets", icon: FolderArchive, show: isManager },
     { to: "/muster", label: "Monthly sheet", icon: Table2, show: isManager },

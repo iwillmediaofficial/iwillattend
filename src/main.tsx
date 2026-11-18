@@ -25,6 +25,7 @@ import { Platform } from "./pages/Platform";
 import { Plans } from "./pages/Plans";
 import { Wfh } from "./pages/Wfh";
 import { Privacy, Terms } from "./pages/Legal";
+import { StaffCheckin } from "./pages/StaffCheckin";
 import { SiteWork } from "./pages/SiteWork";
 import { Assets } from "./pages/Assets";
 import { MyItems } from "./pages/MyItems";
@@ -82,6 +83,7 @@ function App() {
         <Route path="/settings" element={<Guard allow={isAdmin}><Settings /></Guard>} />
         <Route path="/payslips" element={<Guard allow={staff}><Payslips /></Guard>} />
         <Route path="/wfh" element={<Guard allow={staff}><Wfh /></Guard>} />
+        <Route path="/staff-checkin" element={<Guard allow={isManager}><StaffCheckin /></Guard>} />
         <Route path="/site-work" element={<Guard allow={isManager}><SiteWork /></Guard>} />
         <Route path="/assets" element={<Guard allow={isManager}><Assets /></Guard>} />
         <Route path="/my-items" element={<MyItems />} />
