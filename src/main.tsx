@@ -6,7 +6,7 @@ import "./index.css";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Layout } from "./components/Layout";
 import { Spinner } from "./components/ui";
-import { Login, Onboarding, Signup } from "./pages/AuthPages";
+import { ForgotPassword, Login, Onboarding, Signup } from "./pages/AuthPages";
 import { Punch } from "./pages/Punch";
 import { History } from "./pages/History";
 import { Visits } from "./pages/Visits";
@@ -43,6 +43,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="*" element={<Login />} />
       </Routes>
     );

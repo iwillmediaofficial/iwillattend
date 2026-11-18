@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { Building2, CalendarClock, ClipboardCheck, CreditCard, FileBarChart, Fingerprint, FolderArchive, FolderOpen, Globe, HardHat, House, IndianRupee, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCheck, CreditCard, FileBarChart, Fingerprint, FolderArchive, FolderOpen, Globe, HardHat, House, IndianRupee, KeyRound, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import type { Subscription } from "../lib/types";
 import { addDays, fmtDate, todayIn } from "../lib/utils";
+import { ChangePassword } from "./ChangePassword";
 
 function subscriptionNotice(sub: Subscription | null, isAdmin: boolean, tz: string): { text: string; danger: boolean } | null {
   if (!sub) return null;
@@ -25,7 +27,8 @@ function subscriptionNotice(sub: Subscription | null, isAdmin: boolean, tz: stri
 }
 
 export function Layout() {
-  const { employee, org, sub, isAdmin, isManager, isSupervisor, isPlatformAdmin, signOut } = useAuth();
+  const { session, employee, org, sub, isAdmin, isManager, isSupervisor, isPlatformAdmin, signOut } = useAuth();
+  const [changingPassword, setChangingPassword] = useState(false);
   const staff = !isSupervisor; // Owner and Admin have no attendance of their own
   const notice = subscriptionNotice(sub, isAdmin, org?.timezone ?? "Asia/Kolkata");
 
@@ -75,7 +78,10 @@ export function Layout() {
         <div className="border-t border-slate-200 p-3">
           <p className="truncate px-3 text-sm font-medium">{employee?.full_name}</p>
           <p className="px-3 text-xs capitalize text-slate-500">{employee?.role}</p>
-          <button onClick={signOut} className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
+          <button onClick={() => setChangingPassword(true)} className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
+            <KeyRound className="h-4 w-4" /> Change password
+          </button>
+          <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
             <LogOut className="h-4 w-4" /> Sign out
           </button>
         </div>
@@ -87,10 +93,17 @@ export function Layout() {
           <img src="/logo.png" alt="IWILL Attend" className="h-7 w-auto" />
           <p className="truncate text-xs text-slate-500">{org?.name}</p>
         </div>
-        <button onClick={signOut} aria-label="Sign out" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
-          <LogOut className="h-5 w-5" />
-        </button>
+        <div className="flex shrink-0 items-center">
+          <button onClick={() => setChangingPassword(true)} aria-label="Change password" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+            <KeyRound className="h-5 w-5" />
+          </button>
+          <button onClick={signOut} aria-label="Sign out" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+            <LogOut className="h-5 w-5" />
+          </button>
+        </div>
       </header>
+
+      {changingPassword && session?.user.email && <ChangePassword email={session.user.email} onClose={() => setChangingPassword(false)} />}
 
       <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:px-8 md:pb-8">
         <div className="mx-auto max-w-6xl">

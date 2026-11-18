@@ -23,7 +23,7 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
 }
 
 /** Password field with a show/hide button. */
-function PasswordInput({ label, hint, ...rest }: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+export function PasswordInput({ label, hint, ...rest }: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
   const [show, setShow] = useState(false);
   return (
     <Field label={label} hint={hint}>
@@ -67,6 +67,9 @@ export function Login() {
       <form onSubmit={submit} className="space-y-4">
         <Input label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <PasswordInput label="Password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <p className="-mt-2 text-right text-sm">
+          <Link to="/forgot-password" className="font-medium text-brand-600 hover:underline">Forgot password?</Link>
+        </p>
         <ErrorText>{error}</ErrorText>
         <Button type="submit" className="w-full" loading={busy}>
           Sign in
@@ -250,5 +253,128 @@ export function Onboarding() {
         </p>
       </form>
     </div>
+  );
+}
+
+/** Calls the password-reset server function and returns its JSON, throwing its message on failure. */
+async function resetCall(body: Record<string, string>): Promise<{ ok?: boolean; error?: string; expired?: boolean; wait_seconds?: number }> {
+  const { data, error } = await supabase.functions.invoke("password-reset", { body });
+  if (!error) return data;
+  const ctx = (error as { context?: Response }).context;
+  if (ctx && typeof ctx.json === "function") {
+    try {
+      return await ctx.json();
+    } catch {
+      /* fall through */
+    }
+  }
+  return { error: "Could not reach the server. Check your internet and try again." };
+}
+
+/** Forgot password: email -> 6-digit code by email -> new password. */
+export function ForgotPassword() {
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [wait, setWait] = useState(0);
+
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = window.setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [wait]);
+
+  const send = async (e?: FormEvent) => {
+    e?.preventDefault();
+    setBusy(true);
+    setError("");
+    setInfo("");
+    const r = await resetCall({ action: "request", email: email.trim() });
+    setBusy(false);
+    if (r.wait_seconds) setWait(r.wait_seconds);
+    if (r.error && !r.wait_seconds) return setError(r.error);
+    setStep("code");
+    setCode("");
+    if (!r.wait_seconds) setWait(60);
+    setInfo(r.wait_seconds ? r.error! : `If an account exists for ${email.trim()}, we've sent a 6-digit code to it. Check your inbox and spam folder.`);
+  };
+
+  const reset = async (e: FormEvent) => {
+    e.preventDefault();
+    if (password !== confirm) return setError("The two passwords do not match. Type the same password in both boxes.");
+    setBusy(true);
+    setError("");
+    const r = await resetCall({ action: "reset", email: email.trim(), code, password });
+    if (r.error) {
+      setBusy(false);
+      setError(r.error);
+      if (r.expired) setCode("");
+      return;
+    }
+    // Password changed: sign in with it, and the app opens the usual home page.
+    const { error: signErr } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (signErr) {
+      setBusy(false);
+      setInfo("");
+      setError("Your password was changed. Please sign in with the new password.");
+    }
+  };
+
+  if (step === "email") {
+    return (
+      <Shell title="Forgot password" subtitle="We'll email you a 6-digit code">
+        <form onSubmit={send} className="space-y-4">
+          <Input label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <ErrorText>{error}</ErrorText>
+          <Button type="submit" className="w-full" loading={busy}>Send code</Button>
+          <p className="text-center text-sm text-slate-500">
+            <Link to="/login" className="font-medium text-brand-600 hover:underline">Back to sign in</Link>
+          </p>
+        </form>
+      </Shell>
+    );
+  }
+
+  return (
+    <Shell title="Enter the code" subtitle="Then choose a new password">
+      <form onSubmit={reset} className="space-y-4">
+        {info && <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{info}</p>}
+        <Input
+          label="6-digit code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          required
+          pattern="[0-9]{6}"
+          maxLength={6}
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/D/g, "").slice(0, 6))}
+          hint="Valid for 10 minutes."
+        />
+        <PasswordInput label="New password" autoComplete="new-password" required minLength={8} maxLength={72} hint="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput
+          label="Confirm new password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          maxLength={72}
+          hint={confirm && confirm !== password ? "Does not match the password above yet" : undefined}
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+        />
+        <ErrorText>{error}</ErrorText>
+        <Button type="submit" className="w-full" loading={busy}>Set new password</Button>
+        <div className="flex items-center justify-between text-sm">
+          <button type="button" onClick={() => { setStep("email"); setError(""); setInfo(""); }} className="text-slate-500 hover:underline">Change email</button>
+          <button type="button" disabled={wait > 0 || busy} onClick={() => void send()} className="font-medium text-brand-600 hover:underline disabled:text-slate-400 disabled:no-underline">
+            {wait > 0 ? `Send a new code in ${wait}s` : "Send a new code"}
+          </button>
+        </div>
+      </form>
+    </Shell>
   );
 }
