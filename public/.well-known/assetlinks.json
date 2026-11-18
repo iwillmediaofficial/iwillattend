@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "in.iwillattend.app",
+      "sha256_cert_fingerprints": [
+        "6E:C4:2F:BA:11:4B:30:A6:EF:5B:13:6B:90:D7:5D:2C:C8:EB:AC:FC:BA:B0:A8:13:B3:AE:68:A9:BC:3D:41:AE"
+      ]
+    }
+  }
+]

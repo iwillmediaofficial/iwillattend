@@ -9,3 +9,13 @@ dist
 supabase/.temp
 .wrangler
 .dev.vars
+# Android app build output and signing keys (keys live in D:\android-tools\keys, never in git)
+android/app/build
+android/build
+android/.gradle
+android/local.properties
+*.keystore
+*.jks
+*.apk
+*.aab
+*.idsig
