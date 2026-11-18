@@ -17,6 +17,9 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
           <p className="text-sm text-slate-500">{subtitle}</p>
         </div>
         <Card className="p-5">{children}</Card>
+        <p className="mt-4 text-center text-xs text-slate-500">
+          <Link to="/privacy" className="hover:underline">Privacy Policy</Link> · <Link to="/terms" className="hover:underline">Terms of Service</Link>
+        </p>
       </div>
     </div>
   );
@@ -145,6 +148,9 @@ export function Signup() {
             Sign in
           </Link>
         </p>
+        <p className="text-center text-xs text-slate-500">
+          By creating an account you agree to the <Link to="/terms" className="font-medium text-brand-600 hover:underline">Terms of Service</Link> and the <Link to="/privacy" className="font-medium text-brand-600 hover:underline">Privacy Policy</Link>.
+        </p>
         <p className="text-center text-xs text-slate-400">Staff do not register here. Your company admin creates your login.</p>
       </form>
     </Shell>
@@ -242,6 +248,9 @@ export function Onboarding() {
         </Card>
 
         <ErrorText>{error}</ErrorText>
+        <p className="text-center text-xs text-slate-500">
+          By creating the company you confirm you will tell your staff how their attendance, location and selfies are used, as the <Link to="/terms" className="font-medium text-brand-600 hover:underline">Terms</Link> and <Link to="/privacy" className="font-medium text-brand-600 hover:underline">Privacy Policy</Link> explain.
+        </p>
         <Button type="submit" className="w-full py-3" loading={busy}>
           Create company
         </Button>

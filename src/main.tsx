@@ -1,6 +1,6 @@
 import { StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
 import "./index.css";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
@@ -24,6 +24,7 @@ import { Landing } from "./pages/Landing";
 import { Platform } from "./pages/Platform";
 import { Plans } from "./pages/Plans";
 import { Wfh } from "./pages/Wfh";
+import { Privacy, Terms } from "./pages/Legal";
 import { SiteWork } from "./pages/SiteWork";
 import { Assets } from "./pages/Assets";
 import { MyItems } from "./pages/MyItems";
@@ -35,6 +36,11 @@ function Guard({ allow, children }: { allow: boolean; children: ReactNode }) {
 function App() {
   const { loading, session, employee, isAdmin, isManager, isSupervisor, isPlatformAdmin, signOut } = useAuth();
   const staff = !isSupervisor;
+  const { pathname } = useLocation();
+
+  // The legal pages open for everyone, signed in or not, and during company set-up.
+  if (pathname === "/privacy") return <Privacy />;
+  if (pathname === "/terms") return <Terms />;
 
   if (loading) return <Spinner />;
 

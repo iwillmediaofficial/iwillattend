@@ -88,7 +88,9 @@ export function Landing() {
         </section>
       )}
 
-      <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500">© {new Date().getFullYear()} IWILL Attend</footer>
+      <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+        © {new Date().getFullYear()} IWILL Attend · <Link to="/privacy" className="hover:underline">Privacy Policy</Link> · <Link to="/terms" className="hover:underline">Terms of Service</Link>
+      </footer>
     </div>
   );
 }

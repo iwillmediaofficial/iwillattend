@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { Building2, CalendarClock, ClipboardCheck, CreditCard, FileBarChart, Fingerprint, FolderArchive, FolderOpen, Globe, HardHat, House, IndianRupee, KeyRound, ReceiptText, LayoutDashboard, LogOut, MapPinned, Palmtree, Settings as SettingsIcon, Table2, Users } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import type { Subscription } from "../lib/types";
@@ -84,6 +84,9 @@ export function Layout() {
           <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
             <LogOut className="h-4 w-4" /> Sign out
           </button>
+          <p className="mt-2 px-3 text-[11px] text-slate-400">
+            <Link to="/privacy" className="hover:underline">Privacy</Link> · <Link to="/terms" className="hover:underline">Terms</Link>
+          </p>
         </div>
       </aside>
 
