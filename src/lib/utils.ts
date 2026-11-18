@@ -83,15 +83,15 @@ export async function uploadSelfie(orgId: string, employeeId: string, kind: "in"
 }
 
 /** Address of the Cloudflare media Worker (R2). Empty = selfies stay in Supabase Storage. */
-const MEDIA_URL = ((import.meta.env.VITE_MEDIA_URL as string | undefined) ?? "").trim().replace(/\/+$/, "");
+export const MEDIA_URL = ((import.meta.env.VITE_MEDIA_URL as string | undefined) ?? "").trim().replace(/\/+$/, "");
 
-async function accessToken(): Promise<string> {
+export async function accessToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
   if (!data.session) throw new Error("Your session has expired. Sign in again.");
   return data.session.access_token;
 }
 
-async function mediaError(res: Response): Promise<string> {
+export async function mediaError(res: Response): Promise<string> {
   try {
     return ((await res.json()) as { message?: string }).message ?? `error ${res.status}`;
   } catch {

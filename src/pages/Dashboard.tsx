@@ -7,6 +7,7 @@ import { Badge, Card, Empty, PageHeader, Spinner } from "../components/ui";
 import { MapView, type MapPoint } from "../components/MapView";
 import { SelfieThumb } from "../components/SelfieThumb";
 import { AttendanceStatus, FaceBadge, faceFlagged } from "../components/badges";
+import { ExpiringCard } from "../components/assets";
 import { fmtDistance, fmtHours, fmtTime, hoursBetween, mapsLink, todayIn } from "../lib/utils";
 
 interface Data {
@@ -116,6 +117,8 @@ export function Dashboard() {
           {mismatches} punch{mismatches === 1 ? "" : "es"} on this day did not match the registered face, or were not checked against it. Check the selfies below.
         </p>
       )}
+
+      <ExpiringCard />
 
       <div className="mb-5">
         <MapView points={points} className="h-80" />

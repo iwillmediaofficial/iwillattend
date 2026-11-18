@@ -25,6 +25,8 @@ import { Platform } from "./pages/Platform";
 import { Plans } from "./pages/Plans";
 import { Wfh } from "./pages/Wfh";
 import { SiteWork } from "./pages/SiteWork";
+import { Assets } from "./pages/Assets";
+import { MyItems } from "./pages/MyItems";
 
 function Guard({ allow, children }: { allow: boolean; children: ReactNode }) {
   return allow ? <>{children}</> : <Navigate to="/" replace />;
@@ -74,6 +76,8 @@ function App() {
         <Route path="/payslips" element={<Guard allow={staff}><Payslips /></Guard>} />
         <Route path="/wfh" element={<Guard allow={staff}><Wfh /></Guard>} />
         <Route path="/site-work" element={<Guard allow={isManager}><SiteWork /></Guard>} />
+        <Route path="/assets" element={<Guard allow={isManager}><Assets /></Guard>} />
+        <Route path="/my-items" element={<MyItems />} />
         <Route path="/plans" element={<Guard allow={isAdmin}><Plans /></Guard>} />
         <Route path="/platform" element={<Guard allow={isPlatformAdmin}><Platform /></Guard>} />
         <Route path="/payroll" element={<Guard allow={isAdmin}><Payroll /></Guard>} />
