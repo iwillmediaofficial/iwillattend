@@ -212,6 +212,8 @@ export type VisitWithEmployee = Visit & { employee: EmployeeLite | null };
 
 export const ADMIN_ROLES: Role[] = ["owner", "admin", "hr"];
 export const MANAGER_ROLES: Role[] = ["owner", "admin", "hr", "manager"];
+/** Owner and Admin supervise the company: no attendance, leave or salary of their own. */
+export const SUPERVISOR_ROLES: Role[] = ["owner", "admin"];
 
 export interface Plan {
   id: string;

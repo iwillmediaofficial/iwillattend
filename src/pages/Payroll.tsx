@@ -44,7 +44,7 @@ export function Payroll() {
   const loadBase = useCallback(async () => {
     const [s, e, st] = await Promise.all([
       supabase.from("payroll_settings").select("*").maybeSingle(),
-      supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on, designation, department").eq("is_active", true).order("full_name"),
+      supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on, designation, department").eq("is_active", true).not("role", "in", "(owner,admin)").order("full_name"),
       supabase.from("salary_structures").select("*"),
     ]);
     setSettings({ ...DEFAULT_SETTINGS, ...((s.data as Partial<PayrollSettings> | null) ?? {}) });
@@ -77,7 +77,7 @@ export function Payroll() {
   // ---------- Run ----------
   const calculate = () => guard(async () => {
     // Active staff, plus anyone whose last working day falls in or after this month.
-    const staff = await supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on, designation, department")
+    const staff = await supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on, designation, department").not("role", "in", "(owner,admin)")
       .or(`is_active.eq.true,exit_on.gte.${month}-01`).lte("joined_on", monthDates(month).at(-1)!).order("full_name");
     if (staff.error) throw staff.error;
     const eligible = ((staff.data as Emp[]) ?? []).filter((e) => hasSalary(e.id));
@@ -126,7 +126,7 @@ export function Payroll() {
     if (!window.confirm(`${warn}Finalise payroll for ${monthLabel(month)}? Employees will see their payslips and the figures can no longer be changed.`)) return;
 
     // Freeze the month's attendance sheet, so later rule changes cannot rewrite it.
-    const staff = await supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on")
+    const staff = await supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on").not("role", "in", "(owner,admin)")
       .or(`is_active.eq.true,exit_on.gte.${monthDate}`).lte("joined_on", last).order("full_name");
     if (staff.error) throw staff.error;
     const sheet = await loadMuster(month, today, org!, (staff.data as MusterEmployee[]) ?? []);

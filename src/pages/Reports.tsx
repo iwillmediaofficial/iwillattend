@@ -26,6 +26,7 @@ export function Reports() {
     supabase
       .from("employees")
       .select("id, full_name, emp_code, staff_type")
+      .not("role", "in", "(owner,admin)")
       .order("full_name")
       .then(({ data }) => setEmployees((data as EmployeeLite[]) ?? []));
   }, []);

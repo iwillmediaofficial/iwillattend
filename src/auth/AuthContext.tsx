@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { ADMIN_ROLES, MANAGER_ROLES, type Branch, type Employee, type Organization, type Subscription } from "../lib/types";
+import { ADMIN_ROLES, MANAGER_ROLES, SUPERVISOR_ROLES, type Branch, type Employee, type Organization, type Subscription } from "../lib/types";
 
 interface AuthState {
   loading: boolean;
@@ -13,6 +13,8 @@ interface AuthState {
   isPlatformAdmin: boolean;
   isAdmin: boolean;
   isManager: boolean;
+  /** Owner or Admin: supervises only, has no attendance of their own. */
+  isSupervisor: boolean;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -84,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isPlatformAdmin: profile?.sub?.is_platform_admin ?? platformOnly,
       isAdmin: !!role && ADMIN_ROLES.includes(role),
       isManager: !!role && MANAGER_ROLES.includes(role),
+      isSupervisor: !!role && SUPERVISOR_ROLES.includes(role),
       refresh: () => load(userId),
       signOut: async () => {
         await supabase.auth.signOut();

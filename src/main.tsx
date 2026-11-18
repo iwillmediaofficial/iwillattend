@@ -27,11 +27,12 @@ import { Wfh } from "./pages/Wfh";
 import { SiteWork } from "./pages/SiteWork";
 
 function Guard({ allow, children }: { allow: boolean; children: ReactNode }) {
-  return allow ? <>{children}</> : <Navigate to="/punch" replace />;
+  return allow ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function App() {
-  const { loading, session, employee, isAdmin, isManager, isPlatformAdmin, signOut } = useAuth();
+  const { loading, session, employee, isAdmin, isManager, isSupervisor, isPlatformAdmin, signOut } = useAuth();
+  const staff = !isSupervisor;
 
   if (loading) return <Spinner />;
 
@@ -64,19 +65,19 @@ function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/punch" element={<Punch />} />
-        <Route path="/history" element={<History />} />
-        <Route path="/leave" element={<Leave />} />
+        <Route path="/punch" element={<Guard allow={staff}><Punch /></Guard>} />
+        <Route path="/history" element={<Guard allow={staff}><History /></Guard>} />
+        <Route path="/leave" element={<Guard allow={staff}><Leave /></Guard>} />
         <Route path="/approvals" element={<Guard allow={isManager}><Approvals /></Guard>} />
         <Route path="/muster" element={<Guard allow={isManager}><Muster /></Guard>} />
         <Route path="/settings" element={<Guard allow={isAdmin}><Settings /></Guard>} />
-        <Route path="/payslips" element={<Payslips />} />
-        <Route path="/wfh" element={<Wfh />} />
+        <Route path="/payslips" element={<Guard allow={staff}><Payslips /></Guard>} />
+        <Route path="/wfh" element={<Guard allow={staff}><Wfh /></Guard>} />
         <Route path="/site-work" element={<Guard allow={isManager}><SiteWork /></Guard>} />
         <Route path="/plans" element={<Guard allow={isAdmin}><Plans /></Guard>} />
         <Route path="/platform" element={<Guard allow={isPlatformAdmin}><Platform /></Guard>} />
         <Route path="/payroll" element={<Guard allow={isAdmin}><Payroll /></Guard>} />
-        <Route path="/visits" element={<Guard allow={employee.staff_type === "field"}><Visits /></Guard>} />
+        <Route path="/visits" element={<Guard allow={staff && employee.staff_type === "field"}><Visits /></Guard>} />
         <Route path="/dashboard" element={<Guard allow={isManager}><Dashboard /></Guard>} />
         <Route path="/reports" element={<Guard allow={isManager}><Reports /></Guard>} />
         <Route path="/employees" element={<Guard allow={isAdmin}><Employees /></Guard>} />

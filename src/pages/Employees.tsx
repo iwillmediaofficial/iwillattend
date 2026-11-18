@@ -45,6 +45,8 @@ async function callManage(body: Record<string, unknown>) {
   return data;
 }
 
+const isSup = (role: Role) => role === "owner" || role === "admin";
+
 export function Employees() {
   const { employee: me } = useAuth();
   const [rows, setRows] = useState<Employee[] | null>(null);
@@ -77,7 +79,7 @@ export function Employees() {
   const save = async (e: FormEvent) => {
     e.preventDefault();
     if (!form) return;
-    if (form.staff_type === "office" && !form.branch_id) {
+    if (!isSup(form.role) && form.staff_type === "office" && !form.branch_id) {
       setError("Office staff need a branch. Add a branch first, or choose Field staff.");
       return;
     }
@@ -187,12 +189,12 @@ export function Employees() {
                     </td>
                     <td className="px-4 py-2">{r.emp_code ?? "—"}</td>
                     <td className="px-4 py-2 capitalize">{r.role}</td>
-                    <td className="px-4 py-2 capitalize">{r.staff_type}</td>
-                    <td className="px-4 py-2">{branchName(r.branch_id)}</td>
+                    <td className="px-4 py-2 capitalize">{isSup(r.role) ? "—" : r.staff_type}</td>
+                    <td className="px-4 py-2">{isSup(r.role) ? "—" : branchName(r.branch_id)}</td>
                     <td className="px-4 py-2">
                       <span className="inline-flex flex-wrap gap-1">
                         {r.is_active ? <Badge tone="green">Active</Badge> : <Badge tone="red">Inactive</Badge>}
-                        {r.face_enrolled_at ? <Badge tone="indigo">Face registered</Badge> : <Badge>No face</Badge>}
+                        {isSup(r.role) ? <Badge tone="indigo">Supervisor · no attendance</Badge> : r.face_enrolled_at ? <Badge tone="indigo">Face registered</Badge> : <Badge>No face</Badge>}
                       </span>
                     </td>
                     <td className="px-4 py-2 text-right">
@@ -235,10 +237,12 @@ export function Employees() {
               <Input label="Phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
               <Input label="Designation" value={form.designation} onChange={(e) => set("designation", e.target.value)} />
               <Input label="Department" value={form.department} onChange={(e) => set("department", e.target.value)} />
-              <Select label="Staff type" value={form.staff_type} onChange={(e) => set("staff_type", e.target.value as StaffType)}>
-                <option value="office">Office (geofenced)</option>
-                <option value="field">Field (any location)</option>
-              </Select>
+              {!isSup(form.role) && (
+                <Select label="Staff type" value={form.staff_type} onChange={(e) => set("staff_type", e.target.value as StaffType)}>
+                  <option value="office">Office (geofenced)</option>
+                  <option value="field">Field (any location)</option>
+                </Select>
+              )}
               {form.role === "owner" ? (
                 <Input label="Role" value="Owner" disabled />
               ) : (
@@ -250,6 +254,10 @@ export function Employees() {
                 </Select>
               )}
             </div>
+            {isSup(form.role) && (
+              <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-800">Owners and admins supervise the company. They do not mark attendance, take leave or get a salary here, and they do not count toward the plan's employee limit.</p>
+            )}
+            {!isSup(form.role) && (
             <Select label="Branch" value={form.branch_id} onChange={(e) => set("branch_id", e.target.value)} hint={form.staff_type === "office" ? "Required for office staff." : "Optional for field staff."}>
               <option value="">No branch</option>
               {branches.map((b) => (
@@ -258,7 +266,9 @@ export function Employees() {
                 </option>
               ))}
             </Select>
+            )}
             <div className="grid grid-cols-2 gap-3">
+              {!isSup(form.role) && (
               <Select label="Shift" value={form.shift_id} onChange={(e) => set("shift_id", e.target.value)}>
                 <option value="">Company default</option>
                 {shifts.map((s) => (
@@ -267,6 +277,7 @@ export function Employees() {
                   </option>
                 ))}
               </Select>
+              )}
               <Input label="Joining date" type="date" value={form.joined_on} hint={form.id ? undefined : "Blank means today."} onChange={(e) => set("joined_on", e.target.value)} />
             </div>
             {form.id && form.id !== me!.id && form.role !== "owner" && (

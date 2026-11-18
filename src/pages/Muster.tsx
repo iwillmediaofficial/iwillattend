@@ -34,7 +34,7 @@ export function Muster() {
     const last = dates[dates.length - 1];
     Promise.all([
       // Active staff, plus anyone whose last working day falls in or after this month.
-      supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on").or(`is_active.eq.true,exit_on.gte.${first}`).lte("joined_on", last).order("full_name"),
+      supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on").not("role", "in", "(owner,admin)").or(`is_active.eq.true,exit_on.gte.${first}`).lte("joined_on", last).order("full_name"),
       fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value, ot_minutes, ot_status").gte("work_date", first).lte("work_date", last).order("id")),
       supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
       supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),

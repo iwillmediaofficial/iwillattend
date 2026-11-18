@@ -57,7 +57,7 @@ export function SiteWork() {
 
   useEffect(() => {
     void load();
-    supabase.from("employees").select("id, full_name, emp_code, staff_type").eq("is_active", true).order("full_name")
+    supabase.from("employees").select("id, full_name, emp_code, staff_type").eq("is_active", true).not("role", "in", "(owner,admin)").order("full_name")
       .then(({ data }) => setStaff((data as EmployeeLite[]) ?? []));
   }, [load]);
 

@@ -25,16 +25,17 @@ function subscriptionNotice(sub: Subscription | null, isAdmin: boolean, tz: stri
 }
 
 export function Layout() {
-  const { employee, org, sub, isAdmin, isManager, isPlatformAdmin, signOut } = useAuth();
+  const { employee, org, sub, isAdmin, isManager, isSupervisor, isPlatformAdmin, signOut } = useAuth();
+  const staff = !isSupervisor; // Owner and Admin have no attendance of their own
   const notice = subscriptionNotice(sub, isAdmin, org?.timezone ?? "Asia/Kolkata");
 
   const items = [
-    { to: "/punch", label: "Attendance", icon: Fingerprint, show: true },
-    { to: "/visits", label: "Visits", icon: MapPinned, show: employee?.staff_type === "field" },
-    { to: "/history", label: "History", icon: CalendarClock, show: true },
-    { to: "/leave", label: "Leave", icon: Palmtree, show: true },
-    { to: "/wfh", label: "WFH", icon: House, show: true },
-    { to: "/payslips", label: "Payslips", icon: ReceiptText, show: true },
+    { to: "/punch", label: "Attendance", icon: Fingerprint, show: staff },
+    { to: "/visits", label: "Visits", icon: MapPinned, show: staff && employee?.staff_type === "field" },
+    { to: "/history", label: "History", icon: CalendarClock, show: staff },
+    { to: "/leave", label: "Leave", icon: Palmtree, show: staff },
+    { to: "/wfh", label: "WFH", icon: House, show: staff },
+    { to: "/payslips", label: "Payslips", icon: ReceiptText, show: staff },
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: isManager },
     { to: "/approvals", label: "Approvals", icon: ClipboardCheck, show: isManager },
     { to: "/site-work", label: "Site work", icon: HardHat, show: isManager },

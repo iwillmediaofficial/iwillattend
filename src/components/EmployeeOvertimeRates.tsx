@@ -26,7 +26,7 @@ export function EmployeeOvertimeRates() {
 
   const load = useCallback(async () => {
     const [e, s] = await Promise.all([
-      supabase.from("employees").select("id, full_name").eq("is_active", true).order("full_name"),
+      supabase.from("employees").select("id, full_name").eq("is_active", true).not("role", "in", "(owner,admin)").order("full_name"),
       supabase.from("salary_structures").select("employee_id, ot_mode, ot_multiplier, ot_fixed_rate"),
     ]);
     const own = new Map(((s.data as { employee_id: string; ot_mode: Mode; ot_multiplier: number | null; ot_fixed_rate: number | null }[]) ?? []).map((x) => [x.employee_id, x]));

@@ -29,7 +29,7 @@ export function Dashboard() {
     let alive = true;
     setData(null);
     Promise.all([
-      supabase.from("employees").select("id, full_name, emp_code, staff_type").eq("is_active", true).order("full_name"),
+      supabase.from("employees").select("id, full_name, emp_code, staff_type").eq("is_active", true).not("role", "in", "(owner,admin)").order("full_name"),
       supabase.from("attendance").select(`*, ${EMP}, site:site_assignments!site_assignment_id(site_name)`).eq("work_date", date).order("check_in_at"),
       supabase.from("visits").select(`*, ${EMP}`).eq("work_date", date).order("visited_at"),
       supabase.from("branches").select("*").eq("is_active", true),
