@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import type { Subscription } from "../lib/types";
 import { addDays, fmtDate, todayIn } from "../lib/utils";
 import { ChangePassword } from "./ChangePassword";
+import { InstallBanner, InstallButton } from "./InstallApp";
 
 function subscriptionNotice(sub: Subscription | null, isAdmin: boolean, tz: string): { text: string; danger: boolean } | null {
   if (!sub) return null;
@@ -79,7 +80,8 @@ export function Layout() {
         <div className="border-t border-slate-200 p-3">
           <p className="truncate px-3 text-sm font-medium">{employee?.full_name}</p>
           <p className="px-3 text-xs capitalize text-slate-500">{employee?.role}</p>
-          <button onClick={() => setChangingPassword(true)} className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
+          <InstallButton variant="link" className="mt-2" />
+          <button onClick={() => setChangingPassword(true)} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
             <KeyRound className="h-4 w-4" /> Change password
           </button>
           <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100">
@@ -98,6 +100,7 @@ export function Layout() {
           <p className="truncate text-xs text-slate-500">{org?.name}</p>
         </div>
         <div className="flex shrink-0 items-center">
+          <InstallButton variant="icon" />
           <button onClick={() => setChangingPassword(true)} aria-label="Change password" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
             <KeyRound className="h-5 w-5" />
           </button>
@@ -111,6 +114,7 @@ export function Layout() {
 
       <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:px-8 md:pb-8">
         <div className="mx-auto max-w-6xl">
+          <InstallBanner />
           {notice && (
             <p className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${notice.danger ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-800"}`}>{notice.text}</p>
           )}

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Banknote, CalendarCheck, Check, MapPin, MapPinned, ScanFace, ShieldCheck } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import type { Plan } from "../lib/types";
+import { InstallButton } from "../components/InstallApp";
 
 const FEATURES = [
   { icon: MapPin, title: "Selfie + location check-in", text: "Staff check in with a live selfie. Office staff must be inside the branch geofence." },
@@ -42,6 +43,7 @@ export function Landing() {
           <Link to="/login" className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Sign in</Link>
         </div>
         <p className="mt-3 text-xs text-slate-500">14 days of every feature. No card needed.</p>
+        <div className="mt-5 flex justify-center"><InstallButton /></div>
       </section>
 
       <section className="bg-slate-50 py-14">

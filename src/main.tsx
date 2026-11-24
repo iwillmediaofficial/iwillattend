@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import "leaflet/dist/leaflet.css";
 import "./index.css";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { captureInstallPrompt } from "./lib/install";
 import { Layout } from "./components/Layout";
 import { Spinner } from "./components/ui";
 import { ForgotPassword, Login, Onboarding, Signup } from "./pages/AuthPages";
@@ -99,6 +100,17 @@ function App() {
       </Route>
     </Routes>
   );
+}
+
+// Catch the browser's install offer before anything renders, so the Install button can use it.
+captureInstallPrompt();
+
+// The service worker makes the site installable and quick to open. Only in the built site:
+// in development it would get in the way of live reloading.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  });
 }
 
 createRoot(document.getElementById("root")!).render(

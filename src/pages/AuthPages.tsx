@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import type { Plan } from "../lib/types";
 import { Button, Card, ErrorText, Field, Input } from "../components/ui";
 import { errMsg } from "../lib/utils";
+import { InstallButton } from "../components/InstallApp";
 
 function Shell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
@@ -17,6 +18,7 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
           <p className="text-sm text-slate-500">{subtitle}</p>
         </div>
         <Card className="p-5">{children}</Card>
+        <div className="mt-4 flex justify-center"><InstallButton /></div>
         <p className="mt-4 text-center text-xs text-slate-500">
           <Link to="/privacy" className="hover:underline">Privacy Policy</Link> · <Link to="/terms" className="hover:underline">Terms of Service</Link>
         </p>
