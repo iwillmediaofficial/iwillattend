@@ -22,11 +22,18 @@ interface Form {
   joined_on: string;
   exit_on: string;
   is_active: boolean;
+  /** "" = follow the company, "fixed" = own days, "flexible" = own number per week. */
+  wo_mode: "" | "fixed" | "flexible";
+  wo_days: number[];
+  wo_per_week: number;
 }
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const blank: Form = {
   full_name: "", email: "", password: "", emp_code: "", phone: "", designation: "", department: "",
   role: "employee", staff_type: "office", branch_id: "", shift_id: "", joined_on: "", exit_on: "", is_active: true,
+  wo_mode: "", wo_days: [], wo_per_week: 1,
 };
 
 /** Calls the manage-employee function and surfaces its error message. */
@@ -48,7 +55,10 @@ async function callManage(body: Record<string, unknown>) {
 const isSup = (role: Role) => role === "owner" || role === "admin";
 
 export function Employees() {
-  const { employee: me } = useAuth();
+  const { employee: me, org } = useAuth();
+  const companyRule = org!.weekly_off_mode === "flexible"
+    ? `${org!.flex_offs_per_week} day${org!.flex_offs_per_week === 1 ? "" : "s"} off per week, any day`
+    : org!.weekly_offs.length ? `off on ${org!.weekly_offs.map((d) => WEEKDAYS[d]).join(", ")}${(org!.alt_saturday_offs ?? []).length ? " and some Saturdays" : ""}` : "no fixed weekly off";
   const [rows, setRows] = useState<Employee[] | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -95,7 +105,13 @@ export function Employees() {
         staff_type: form.staff_type,
         branch_id: form.branch_id || null,
       };
-      const extra: Record<string, unknown> = { shift_id: form.shift_id || null };
+      if (form.wo_mode === "fixed" && form.wo_days.length === 0) throw new Error("Choose at least one weekly off day, or set Weekly off to follow the company.");
+      const extra: Record<string, unknown> = {
+        shift_id: form.shift_id || null,
+        weekly_off_mode: form.wo_mode || null,
+        weekly_offs: form.wo_mode === "fixed" ? form.wo_days : null,
+        flex_offs_per_week: form.wo_mode === "flexible" ? form.wo_per_week : null,
+      };
       if (form.joined_on) extra.joined_on = form.joined_on;
       if (form.id) {
         const isOwnerRow = form.role === "owner";
@@ -145,6 +161,7 @@ export function Employees() {
       id: r.id, full_name: r.full_name, email: r.email, password: "", emp_code: r.emp_code ?? "", phone: r.phone ?? "",
       designation: r.designation ?? "", department: r.department ?? "", role: r.role, staff_type: r.staff_type,
       branch_id: r.branch_id ?? "", shift_id: r.shift_id ?? "", joined_on: r.joined_on, exit_on: r.exit_on ?? "", is_active: r.is_active,
+      wo_mode: r.weekly_off_mode ?? "", wo_days: r.weekly_offs ?? [], wo_per_week: r.flex_offs_per_week ?? 1,
     });
   };
 
@@ -280,6 +297,34 @@ export function Employees() {
               )}
               <Input label="Joining date" type="date" value={form.joined_on} hint={form.id ? undefined : "Blank means today."} onChange={(e) => set("joined_on", e.target.value)} />
             </div>
+            {!isSup(form.role) && (
+              <div className="space-y-2">
+                <Select label="Weekly off" value={form.wo_mode} onChange={(e) => set("wo_mode", e.target.value as Form["wo_mode"])}
+                  hint={form.wo_mode === "" ? `Follows the company rule: ${companyRule}.` : form.wo_mode === "flexible" ? "Their planned day off counts first; otherwise the first day they miss each week." : undefined}>
+                  <option value="">Same as the company</option>
+                  <option value="fixed">Their own fixed day(s)</option>
+                  <option value="flexible">Flexible: any day of the week</option>
+                </Select>
+                {form.wo_mode === "fixed" && (
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Weekly off days">
+                    {WEEKDAYS.map((d, i) => {
+                      const on = form.wo_days.includes(i);
+                      return (
+                        <button key={d} type="button" aria-pressed={on} onClick={() => set("wo_days", on ? form.wo_days.filter((x) => x !== i) : [...form.wo_days, i].sort())}
+                          className={`rounded-lg border px-2.5 py-1 text-sm font-medium ${on ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300 bg-white text-slate-600"}`}>
+                          {d}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {form.wo_mode === "flexible" && (
+                  <Select label="Days off per week" value={String(form.wo_per_week)} onChange={(e) => set("wo_per_week", Number(e.target.value))}>
+                    {[1, 2, 3].map((n) => <option key={n} value={n}>{n} day{n === 1 ? "" : "s"} per week</option>)}
+                  </Select>
+                )}
+              </div>
+            )}
             {form.id && form.id !== me!.id && form.role !== "owner" && (
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} /> Active (can sign in and mark attendance)

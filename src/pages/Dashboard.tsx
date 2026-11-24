@@ -3,16 +3,20 @@ import { LogIn, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
-import type { AttendanceWithEmployee, Branch, EmployeeLite, VisitWithEmployee } from "../lib/types";
+import type { AttendanceWithEmployee, Branch, Employee, EmployeeLite, VisitWithEmployee } from "../lib/types";
 import { Badge, Card, Empty, PageHeader, Spinner } from "../components/ui";
 import { MapView, type MapPoint } from "../components/MapView";
 import { SelfieThumb } from "../components/SelfieThumb";
 import { AttendanceStatus, FaceBadge, faceFlagged } from "../components/badges";
 import { ExpiringCard } from "../components/assets";
-import { fmtDistance, fmtHours, fmtTime, hoursBetween, mapsLink, todayIn } from "../lib/utils";
+import { addDays, fmtDistance, fmtHours, fmtTime, hoursBetween, mapsLink, todayIn } from "../lib/utils";
+import { weekRuleOf, weekStart } from "../lib/muster";
+
+type Staff = EmployeeLite & Pick<Employee, "weekly_off_mode" | "weekly_offs" | "flex_offs_per_week">;
 
 interface Data {
-  employees: EmployeeLite[];
+  planned: { employee_id: string; off_date: string }[];
+  employees: Staff[];
   attendance: AttendanceWithEmployee[];
   visits: VisitWithEmployee[];
   branches: Branch[];
@@ -31,14 +35,16 @@ export function Dashboard() {
     let alive = true;
     setData(null);
     Promise.all([
-      supabase.from("employees").select("id, full_name, emp_code, staff_type").eq("is_active", true).not("role", "in", "(owner,admin)").order("full_name"),
+      supabase.from("employees").select("id, full_name, emp_code, staff_type, weekly_off_mode, weekly_offs, flex_offs_per_week").eq("is_active", true).not("role", "in", "(owner,admin)").order("full_name"),
       supabase.from("attendance").select(`*, ${EMP}, site:site_assignments!site_assignment_id(site_name)`).eq("work_date", date).order("check_in_at"),
       supabase.from("visits").select(`*, ${EMP}`).eq("work_date", date).order("visited_at"),
       supabase.from("branches").select("*").eq("is_active", true),
-    ]).then(([e, a, v, b]) => {
+      supabase.from("planned_offs").select("employee_id, off_date").gte("off_date", weekStart(date)).lte("off_date", addDays(weekStart(date), 6)),
+    ]).then(([e, a, v, b, p]) => {
       if (!alive) return;
       setData({
-        employees: (e.data as EmployeeLite[]) ?? [],
+        planned: (p.data as Data["planned"]) ?? [],
+        employees: (e.data as Staff[]) ?? [],
         attendance: (a.data as unknown as AttendanceWithEmployee[]) ?? [],
         visits: (v.data as unknown as VisitWithEmployee[]) ?? [],
         branches: (b.data as Branch[]) ?? [],
@@ -88,6 +94,11 @@ export function Dashboard() {
 
   const presentIds = new Set(data.attendance.map((a) => a.employee_id));
   const absent = data.employees.filter((e) => !presentIds.has(e.id));
+  const plannedToday = new Set(data.planned.filter((p) => p.off_date === date).map((p) => p.employee_id));
+  const isFlexible = (e: Staff) => weekRuleOf(e, org!).mode === "flexible";
+  const nameOf = new Map(data.employees.map((e) => [e.id, e.full_name]));
+  const week = Array.from({ length: 7 }, (_, i) => addDays(weekStart(date), i));
+  const anyFlexible = data.employees.some(isFlexible);
   const mismatches =
     data.attendance.filter((a) => faceFlagged(a.check_in_face_match, a.face_required)).length +
     data.attendance.filter((a) => a.check_out_at && faceFlagged(a.check_out_face_match, a.face_required)).length +
@@ -211,6 +222,24 @@ export function Dashboard() {
         )}
       </Card>
 
+      {anyFlexible && (
+        <Card className="mb-5">
+          <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">Planned weekly offs this week</h2>
+          <div className="grid grid-cols-2 gap-px bg-slate-100 sm:grid-cols-7">
+            {week.map((d) => {
+              const names = data.planned.filter((p) => p.off_date === d).map((p) => nameOf.get(p.employee_id)).filter(Boolean);
+              return (
+                <div key={d} className={`bg-white px-3 py-2 ${d === date ? "ring-2 ring-inset ring-brand-200" : ""}`}>
+                  <p className="text-xs font-semibold text-slate-600">{new Date(d + "T00:00:00Z").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", timeZone: "UTC" })}</p>
+                  {names.length === 0 ? <p className="text-xs text-slate-400">—</p> : names.map((n) => <p key={n} className="truncate text-xs">{n}</p>)}
+                </div>
+              );
+            })}
+          </div>
+          <p className="px-4 py-2 text-xs text-slate-500">Staff on flexible weekly offs plan their day in the app. Someone who did not plan gets the first day they miss that week.</p>
+        </Card>
+      )}
+
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
           <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">Not checked in ({absent.length})</h2>
@@ -221,6 +250,7 @@ export function Dashboard() {
               {absent.map((e) => (
                 <li key={e.id} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
                   <span className="min-w-0 flex-1 truncate">{e.full_name}</span>
+                  {plannedToday.has(e.id) ? <Badge tone="indigo">Planned weekly off</Badge> : isFlexible(e) ? <Badge tone="slate">May be on weekly off</Badge> : null}
                   <Badge>{e.staff_type}</Badge>
                   {canCheckInStaff && e.id !== me!.id && (
                     <Link to={`/staff-checkin?emp=${e.id}`} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50">

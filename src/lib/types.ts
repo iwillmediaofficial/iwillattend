@@ -17,6 +17,9 @@ export interface Organization {
   face_check_enabled: boolean;
   /** Owner, Admin, HR and Manager may check staff in and out with the staff member's selfie. */
   staff_checkin_enabled: boolean;
+  /** fixed = the same days off for everyone; flexible = a number of days off per week, any day. */
+  weekly_off_mode: "fixed" | "flexible";
+  flex_offs_per_week: number;
   /** How a past day with no check-out is paid. */
   missing_checkout_as: "half_day" | "full_day" | "absent";
   /** Weekly offs and holidays between unpaid absences are not paid. */
@@ -128,6 +131,10 @@ export interface Employee {
   exit_on: string | null;
   face_enrolled_at: string | null;
   is_active: boolean;
+  /** null = follow the company; otherwise this employee's own weekly-off rule. */
+  weekly_off_mode: "fixed" | "flexible" | null;
+  weekly_offs: number[] | null;
+  flex_offs_per_week: number | null;
 }
 
 /** short = worked less than a full day and valued by the company's rules (see day_value). */

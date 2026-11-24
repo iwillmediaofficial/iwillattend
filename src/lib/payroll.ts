@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { buildMuster, monthDates, type MusterAttendance, type MusterEmployee, type MusterRow, type MusterRules } from "./muster";
+import { buildMuster, musterRange, type MusterAttendance, type MusterEmployee, type MusterRow, type MusterRules, type PlannedOff } from "./muster";
 import type { Holiday, LeaveRequest, Organization } from "./types";
 import { fetchAll } from "./utils";
 
@@ -183,20 +183,25 @@ export function computeSlip(st: SalaryStructure, s: PayrollSettings, row: Muster
 
 /** Builds the monthly attendance sheet for the given employees (same rules as the Monthly sheet page). */
 export async function loadMuster(month: string, today: string, rules: MusterRules, employees: MusterEmployee[]): Promise<MusterRow[]> {
-  const dates = monthDates(month);
-  const first = dates[0];
-  const last = dates[dates.length - 1];
-  const [attendance, l, h] = await Promise.all([
-    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value, ot_minutes, ot_status").gte("work_date", first).lte("work_date", last).order("id")),
-    supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
-    supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),
+  // Whole Monday-to-Sunday weeks, so a flexible weekly off is decided the same way in both months a week spans.
+  const { from, to } = musterRange(month);
+  const ids = employees.map((e) => e.id);
+  const [attendance, l, h, p, r] = await Promise.all([
+    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value, ot_minutes, ot_status").gte("work_date", from).lte("work_date", to).order("id")),
+    supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", to).gte("to_date", from),
+    supabase.from("holidays").select("*").gte("holiday_date", from).lte("holiday_date", to),
+    supabase.from("planned_offs").select("employee_id, off_date").gte("off_date", from).lte("off_date", to),
+    ids.length ? supabase.from("employees").select("id, weekly_off_mode, weekly_offs, flex_offs_per_week").in("id", ids) : Promise.resolve({ data: [], error: null }),
   ]);
-  const err = l.error ?? h.error;
+  const err = l.error ?? h.error ?? p.error ?? r.error;
   if (err) throw err;
+  const ruleOf = new Map(((r.data as Pick<MusterEmployee, "id" | "weekly_off_mode" | "weekly_offs" | "flex_offs_per_week">[]) ?? []).map((x) => [x.id, x]));
   return buildMuster(
-    month, today, rules, employees,
+    month, today, rules,
+    employees.map((e) => ({ ...e, ...ruleOf.get(e.id) })),
     attendance,
     (l.data as unknown as LeaveRequest[]) ?? [],
     (h.data as Holiday[]) ?? [],
+    (p.data as PlannedOff[]) ?? [],
   );
 }

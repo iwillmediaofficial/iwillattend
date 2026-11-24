@@ -225,6 +225,37 @@ export function Settings() {
 
       <Card className="mb-5 p-4">
         <h2 className="mb-3 text-sm font-semibold">Weekly offs</h2>
+        <div className="mb-4 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="How weekly offs work">
+          {([
+            ["fixed", "Fixed days", "Everyone is off on the same days, for example every Sunday."],
+            ["flexible", "Flexible days", "Each person gets days off per week on any day they choose, for example a salon open all week."],
+          ] as const).map(([mode, title, text]) => {
+            const on = (org!.weekly_off_mode ?? "fixed") === mode;
+            return (
+              <button key={mode} role="radio" aria-checked={on} disabled={!canEditOrg} onClick={() => setOrgRule({ weekly_off_mode: mode })}
+                className={`rounded-lg border p-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${on ? "border-brand-600 bg-brand-50 ring-1 ring-brand-600" : "border-slate-200 bg-white hover:border-slate-300"}`}>
+                <span className="block text-sm font-semibold">{title}</span>
+                <span className="mt-0.5 block text-xs text-slate-600">{text}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {org!.weekly_off_mode === "flexible" ? (
+          <>
+            <Select label="Days off per week" value={String(org!.flex_offs_per_week ?? 1)} disabled={!canEditOrg} onChange={(e) => setOrgRule({ flex_offs_per_week: Number(e.target.value) })}>
+              {[1, 2, 3].map((n) => <option key={n} value={n}>{n} day{n === 1 ? "" : "s"} per week, any day</option>)}
+            </Select>
+            <div className="mt-3 space-y-1 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+              <p><b>How it is counted</b> (weeks run Monday to Sunday):</p>
+              <p>1. Days a staff member planned as their weekly off in the app count first.</p>
+              <p>2. Otherwise the first day they do not come that week is their weekly off (paid).</p>
+              <p>3. Any other day they miss that week is absent. A 7-day leave is 6 leave days and 1 weekly off.</p>
+              <p>If someone works all 7 days, the extra day can be paid as overtime when "work on a weekly off counts as overtime" is on.</p>
+            </div>
+          </>
+        ) : (
+          <>
         <div className="flex flex-wrap gap-2">
           {DAYS.map((d, i) => {
             const on = org!.weekly_offs.includes(i);
@@ -249,6 +280,9 @@ export function Settings() {
           })}
         </div>
         <p className="mt-2 text-xs text-slate-500">{canEditOrg ? "Highlighted days are not counted as absent or as leave. For 2nd and 4th Saturday off, select those two." : "Only the owner or an admin can change weekly offs."}</p>
+          </>
+        )}
+        <p className="mt-3 text-xs text-slate-500">You can give any employee their own rule (their own fixed day, or a different number of days) on the Employees page.</p>
       </Card>
 
       <DayRulesCard canEdit={canEditOrg} />

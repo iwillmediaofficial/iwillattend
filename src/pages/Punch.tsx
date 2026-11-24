@@ -8,6 +8,7 @@ import { CaptureFlow, type Capture } from "../components/CaptureFlow";
 import { SelfieThumb } from "../components/SelfieThumb";
 import { AttendanceStatus, FaceBadge } from "../components/badges";
 import { FaceEnroll } from "../components/FaceEnroll";
+import { WeeklyOffPlanner } from "../components/WeeklyOffPlanner";
 import { fmtDate, fmtDistance, fmtHours, fmtTime, hoursBetween, todayIn, uploadSelfie } from "../lib/utils";
 
 export function Punch() {
@@ -24,6 +25,7 @@ export function Punch() {
   const [wfhToday, setWfhToday] = useState(false);
   // Site work allotted by a manager, today's and upcoming.
   const [sites, setSites] = useState<SiteAssignment[]>([]);
+  const [offToday, setOffToday] = useState(false);
   // Shown after a punch: what was recorded and whether the face matched.
   const [result, setResult] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -107,6 +109,9 @@ export function Punch() {
             )}
             <Clock className="mx-auto mb-2 h-10 w-10 text-slate-300" />
             <p className="mb-1 text-lg font-semibold">Not checked in yet</p>
+            {offToday && (
+              <p className="mb-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">Today is your planned weekly off. If you check in, it will count as a working day instead.</p>
+            )}
             <p className="mb-5 text-sm text-slate-500">
               {siteToday
                 ? `Site work today: ${siteToday.site_name}. You can check in from the site.`
@@ -178,6 +183,8 @@ export function Punch() {
           </>
         )}
       </Card>
+
+      <WeeklyOffPlanner onChange={setOffToday} />
 
       {sites.length > 0 && (
         <Card className="mx-auto mt-4 max-w-md">

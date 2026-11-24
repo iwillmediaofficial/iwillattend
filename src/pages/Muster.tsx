@@ -2,17 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
-import type { Holiday, LeaveRequest } from "../lib/types";
 import { Button, Card, Empty, PageHeader, Spinner } from "../components/ui";
-import { COUNT_CODES, DAY_CODES, buildMuster, monthDates, type MusterAttendance, type MusterEmployee, type MusterRow } from "../lib/muster";
-import { downloadCsv, fetchAll, todayIn } from "../lib/utils";
-
-interface Data {
-  employees: MusterEmployee[];
-  attendance: MusterAttendance[];
-  leaves: LeaveRequest[];
-  holidays: Holiday[];
-}
+import { COUNT_CODES, DAY_CODES, monthDates, type MusterEmployee, type MusterRow } from "../lib/muster";
+import { loadMuster } from "../lib/payroll";
+import { downloadCsv, todayIn } from "../lib/utils";
 
 const cls = Object.fromEntries(DAY_CODES.map((c) => [c.code, c.cls]));
 const COLS = COUNT_CODES;
@@ -21,7 +14,7 @@ export function Muster() {
   const { org } = useAuth();
   const today = todayIn(org!.timezone);
   const [month, setMonth] = useState(today.slice(0, 7));
-  const [data, setData] = useState<Data | null>(null);
+  const [liveRows, setLiveRows] = useState<MusterRow[] | null>(null);
   // Saved copy of the sheet from when the month's payroll was finalised.
   const [frozen, setFrozen] = useState<MusterRow[] | null>(null);
 
@@ -29,28 +22,20 @@ export function Muster() {
 
   useEffect(() => {
     let alive = true;
-    setData(null);
+    setLiveRows(null);
     const first = dates[0];
     const last = dates[dates.length - 1];
-    Promise.all([
+    void (async () => {
       // Active staff, plus anyone whose last working day falls in or after this month.
-      supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on").not("role", "in", "(owner,admin)").or(`is_active.eq.true,exit_on.gte.${first}`).lte("joined_on", last).order("full_name"),
-      fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value, ot_minutes, ot_status").gte("work_date", first).lte("work_date", last).order("id")),
-      supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", last).gte("to_date", first),
-      supabase.from("holidays").select("*").gte("holiday_date", first).lte("holiday_date", last),
-    ]).then(([e, a, l, h]) => {
-      if (!alive) return;
-      setData({
-        employees: (e.data as Data["employees"]) ?? [],
-        attendance: a,
-        leaves: (l.data as unknown as LeaveRequest[]) ?? [],
-        holidays: (h.data as Holiday[]) ?? [],
-      });
-    });
+      const { data: e } = await supabase.from("employees").select("id, full_name, emp_code, joined_on, exit_on")
+        .not("role", "in", "(owner,admin)").or(`is_active.eq.true,exit_on.gte.${first}`).lte("joined_on", last).order("full_name");
+      const built = await loadMuster(month, today, org!, (e as MusterEmployee[]) ?? []);
+      if (alive) setLiveRows(built);
+    })();
     return () => {
       alive = false;
     };
-  }, [dates]);
+  }, [dates, month, today, org]);
 
   useEffect(() => {
     let alive = true;
@@ -77,11 +62,7 @@ export function Muster() {
     };
   }, [month]);
 
-  const live = useMemo(
-    () => (data ? buildMuster(month, today, org!, data.employees, data.attendance, data.leaves, data.holidays) : []),
-    [data, month, today, org],
-  );
-  const rows = frozen ?? live;
+  const rows = frozen ?? liveRows ?? [];
 
   const exportCsv = () =>
     downloadCsv(`attendance_sheet_${month}.csv`, [
@@ -115,7 +96,7 @@ export function Muster() {
       </div>
 
       <Card>
-        {!data ? (
+        {!frozen && !liveRows ? (
           <Spinner />
         ) : rows.length === 0 ? (
           <Empty>No active employees.</Empty>

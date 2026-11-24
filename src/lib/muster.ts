@@ -19,9 +19,54 @@ export const DAY_CODES: { code: DayCode; label: string; cls: string }[] = [
 export const COUNT_CODES = ["P", "L", "HD", "SH", "MC", "LV", "LOP", "A", "WO", "H"] as const;
 type CountCode = (typeof COUNT_CODES)[number];
 
-export type MusterEmployee = Pick<Employee, "id" | "full_name" | "emp_code" | "joined_on" | "exit_on">;
+export type MusterEmployee = Pick<Employee, "id" | "full_name" | "emp_code" | "joined_on" | "exit_on"> &
+  Partial<Pick<Employee, "weekly_off_mode" | "weekly_offs" | "flex_offs_per_week">>;
 export type MusterAttendance = Pick<Attendance, "employee_id" | "work_date" | "status" | "check_out_at" | "day_value" | "ot_minutes" | "ot_status">;
-export type MusterRules = Pick<Organization, "weekly_offs" | "alt_saturday_offs" | "missing_checkout_as" | "sandwich_rule">;
+export type MusterRules = Pick<Organization, "weekly_offs" | "alt_saturday_offs" | "missing_checkout_as" | "sandwich_rule"> &
+  Partial<Pick<Organization, "weekly_off_mode" | "flex_offs_per_week">>;
+
+/** A weekly off a flexible employee planned in advance. */
+export interface PlannedOff {
+  employee_id: string;
+  off_date: string;
+}
+
+/** The weekly-off rule for one employee: their own setting, or the company's. */
+export interface WeekRule {
+  mode: "fixed" | "flexible";
+  days: number[];
+  sats: number[];
+  perWeek: number;
+}
+
+export function weekRuleOf(e: Partial<Pick<Employee, "weekly_off_mode" | "weekly_offs" | "flex_offs_per_week">>, org: MusterRules): WeekRule {
+  const mode = e.weekly_off_mode ?? org.weekly_off_mode ?? "fixed";
+  const own = e.weekly_off_mode === "fixed";
+  return {
+    mode,
+    days: own ? e.weekly_offs ?? [] : org.weekly_offs,
+    sats: own ? [] : org.alt_saturday_offs ?? [],
+    perWeek: e.flex_offs_per_week ?? org.flex_offs_per_week ?? 1,
+  };
+}
+
+/** Monday of the week a date falls in (weeks run Monday to Sunday). */
+export function weekStart(d: string): string {
+  const back = (dow(d) + 6) % 7;
+  return shift(d, -back);
+}
+
+function shift(d: string, days: number): string {
+  const t = new Date(d + "T00:00:00Z");
+  t.setUTCDate(t.getUTCDate() + days);
+  return t.toISOString().slice(0, 10);
+}
+
+/** First and last date of the whole Monday-to-Sunday weeks that cover a month. */
+export function musterRange(month: string): { from: string; to: string } {
+  const dates = monthDates(month);
+  return { from: weekStart(dates[0]), to: shift(weekStart(dates[dates.length - 1]), 6) };
+}
 
 export interface MusterRow {
   employee: MusterEmployee;
@@ -44,13 +89,12 @@ export function monthDates(month: string): string[] {
 }
 
 const dow = (d: string) => new Date(d + "T00:00:00Z").getUTCDay();
-const isOff = (c: DayCode) => c === "WO" || c === "H";
 
 /** Weekly off: a fixed weekday, or one of the chosen Saturdays of the month (1st to 5th). */
-export function isWeeklyOff(d: string, rules: Pick<Organization, "weekly_offs" | "alt_saturday_offs">): boolean {
+export function isWeeklyOff(d: string, rule: Pick<WeekRule, "days" | "sats">): boolean {
   const day = dow(d);
-  if (rules.weekly_offs.includes(day)) return true;
-  return day === 6 && (rules.alt_saturday_offs ?? []).includes(Math.floor((Number(d.slice(8)) - 1) / 7) + 1);
+  if (rule.days.includes(day)) return true;
+  return day === 6 && rule.sats.includes(Math.floor((Number(d.slice(8)) - 1) / 7) + 1);
 }
 
 export function buildMuster(
@@ -61,6 +105,7 @@ export function buildMuster(
   attendance: MusterAttendance[],
   leaves: LeaveRequest[],
   holidays: Holiday[],
+  planned: PlannedOff[] = [],
 ): MusterRow[] {
   const dates = monthDates(month);
   const att = new Map(attendance.map((a) => [a.employee_id + a.work_date, a]));
@@ -68,8 +113,49 @@ export function buildMuster(
   const approved = leaves.filter((l) => l.status === "approved");
   const mcPay = rules.missing_checkout_as === "full_day" ? 1 : rules.missing_checkout_as === "half_day" ? 0.5 : 0;
 
+  const plannedSet = new Set(planned.map((p) => p.employee_id + p.off_date));
+
   return employees.map((employee) => {
     const mine = approved.filter((l) => l.employee_id === employee.id);
+    const rule = weekRuleOf(employee, rules);
+    const flexible = rule.mode === "flexible";
+    const fullLeave = (d: string) => mine.find((l) => !l.half_day && l.from_date <= d && l.to_date >= d);
+    const employed = (d: string) => d >= employee.joined_on && (!employee.exit_on || d <= employee.exit_on);
+
+    // Flexible weekly offs, decided per Monday-to-Sunday week (the whole week, even across months):
+    // planned days first, then the earliest day not worked, then, for a week spent entirely on
+    // leave, the last leave day. Days still ahead are not decided yet.
+    const flexOff = new Set<string>();
+    if (flexible) {
+      for (let w = weekStart(dates[0]); w <= dates[dates.length - 1]; w = shift(w, 7)) {
+        const week = Array.from({ length: 7 }, (_, i) => shift(w, i)).filter(employed);
+        let left = rule.perWeek;
+        const worked = (d: string) => att.has(employee.id + d);
+        const free = (d: string) => !worked(d) && !hol.has(d);
+        for (const d of week) {
+          if (left > 0 && plannedSet.has(employee.id + d) && free(d)) {
+            left--;
+            if (d <= today) flexOff.add(d);
+          }
+        }
+        for (const d of week) {
+          if (left > 0 && d < today && free(d) && !flexOff.has(d) && !fullLeave(d)) {
+            flexOff.add(d);
+            left--;
+          }
+        }
+        const allLeave = week.length > 0 && week.every((d) => d < today && (hol.has(d) || (!worked(d) && fullLeave(d))));
+        if (allLeave) {
+          for (const d of [...week].reverse()) {
+            if (left > 0 && !hol.has(d) && !flexOff.has(d)) {
+              flexOff.add(d);
+              left--;
+            }
+          }
+        }
+      }
+    }
+    const isWeekOff = (d: string) => (flexible ? flexOff.has(d) : isWeeklyOff(d, rule));
     const pay: number[] = [];
     let otMinutes = 0;
     let otPendingMinutes = 0;
@@ -79,7 +165,7 @@ export function buildMuster(
       if (d > today) return "";
       if (d < employee.joined_on || (employee.exit_on && d > employee.exit_on)) return "-";
       const a = att.get(employee.id + d);
-      const off = hol.has(d) || isWeeklyOff(d, rules);
+      const off = hol.has(d) || isWeekOff(d);
       const leave = off ? undefined : mine.find((l) => l.from_date <= d && l.to_date >= d);
       const paidHalfLeave = leave?.half_day && leave.leave_type?.is_paid ? 0.5 : 0;
 
@@ -123,6 +209,7 @@ export function buildMuster(
     // unpaid absences, or when the employee earned no paid working day in the whole month.
     let unpaidOff = 0;
     if (rules.sandwich_rule) {
+      const isOff = (c: DayCode) => c === "H" || (!flexible && c === "WO");
       const isWorking = (c: DayCode) => c !== "" && c !== "-" && !isOff(c);
       const anyPaidWork = days.some((c, i) => isWorking(c) && pay[i] > 0);
       const unpaidAbsence = (i: number) => (days[i] === "A" || days[i] === "LOP" || days[i] === "MC" || days[i] === "SH") && pay[i] === 0;
