@@ -187,7 +187,7 @@ export async function loadMuster(month: string, today: string, rules: MusterRule
   const { from, to } = musterRange(month);
   const ids = employees.map((e) => e.id);
   const [attendance, l, h, p, r] = await Promise.all([
-    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value, ot_minutes, ot_status").gte("work_date", from).lte("work_date", to).order("id")),
+    fetchAll<MusterAttendance>(() => supabase.from("attendance").select("employee_id, work_date, status, check_out_at, day_value, ot_minutes, ot_status, is_wfh").gte("work_date", from).lte("work_date", to).order("id")),
     supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("status", "approved").lte("from_date", to).gte("to_date", from),
     supabase.from("holidays").select("*").gte("holiday_date", from).lte("holiday_date", to),
     supabase.from("planned_offs").select("employee_id, off_date").gte("off_date", from).lte("off_date", to),

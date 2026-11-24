@@ -7,10 +7,20 @@ import { Button, Card, Empty, ErrorText, Field, Input, Modal, PageHeader, Select
 import { RequestBadge } from "../components/badges";
 import { errMsg, fmtDate, todayIn } from "../lib/utils";
 
+
+/** Years from the joining year to this year, newest first. */
+function yearsSince(joined: string | undefined, today: string): string[] {
+  const first = Math.max(Number((joined ?? today).slice(0, 4)), Number(today.slice(0, 4)) - 9);
+  const out: string[] = [];
+  for (let y = Number(today.slice(0, 4)); y >= first; y--) out.push(String(y));
+  return out;
+}
+
 export function Leave() {
   const { employee, org } = useAuth();
   const today = todayIn(org!.timezone);
-  const year = today.slice(0, 4);
+  const [year, setYear] = useState(today.slice(0, 4));
+  const years = yearsSince(employee?.joined_on, today);
   const [types, setTypes] = useState<LeaveType[]>([]);
   const [rows, setRows] = useState<LeaveRequest[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -25,7 +35,7 @@ export function Leave() {
   const load = useCallback(async () => {
     const [t, r] = await Promise.all([
       supabase.from("leave_types").select("*").eq("is_active", true).order("name"),
-      supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("employee_id", employee!.id).gte("from_date", `${year}-01-01`).order("from_date", { ascending: false }),
+      supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("employee_id", employee!.id).gte("from_date", `${year}-01-01`).lte("from_date", `${year}-12-31`).order("from_date", { ascending: false }),
     ]);
     setTypes((t.data as LeaveType[]) ?? []);
     setRows((r.data as unknown as LeaveRequest[]) ?? []);
@@ -66,9 +76,16 @@ export function Leave() {
         title="Leave"
         subtitle={`Balances for ${year}`}
         action={
+          <div className="flex gap-2">
+          {years.length > 1 && (
+            <select aria-label="Year" value={year} onChange={(e) => { setRows(null); setYear(e.target.value); }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+              {years.map((y) => <option key={y}>{y}</option>)}
+            </select>
+          )}
           <Button onClick={() => { setError(""); setTypeId(types[0]?.id ?? ""); setOpen(true); }} disabled={types.length === 0}>
             <Plus className="h-4 w-4" /> Request leave
           </Button>
+          </div>
         }
       />
 

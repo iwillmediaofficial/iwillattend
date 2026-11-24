@@ -5,12 +5,25 @@ import { useAuth } from "../auth/AuthContext";
 import type { WfhRequest } from "../lib/types";
 import { Button, Card, Empty, ErrorText, Field, Input, Modal, PageHeader, Spinner } from "../components/ui";
 import { RequestBadge } from "../components/badges";
-import { addDays, errMsg, fmtDate, todayIn } from "../lib/utils";
+import { errMsg, fmtDate, todayIn } from "../lib/utils";
+
+
+/** Years from the joining year to this year, newest first. */
+function yearsSince(joined: string | undefined, today: string): string[] {
+  const first = Math.max(Number((joined ?? today).slice(0, 4)), Number(today.slice(0, 4)) - 9);
+  const out: string[] = [];
+  for (let y = Number(today.slice(0, 4)); y >= first; y--) out.push(String(y));
+  return out;
+}
 
 export function Wfh() {
   const { employee, org } = useAuth();
   const today = todayIn(org!.timezone);
   const [rows, setRows] = useState<WfhRequest[] | null>(null);
+  const [year, setYear] = useState(today.slice(0, 4));
+  const years = yearsSince(employee?.joined_on, today);
+  // Days actually worked from home this year (a count only, no rows are downloaded).
+  const [daysWorked, setDaysWorked] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
@@ -19,14 +32,25 @@ export function Wfh() {
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    const { data } = await supabase
-      .from("wfh_requests")
-      .select("*")
-      .eq("employee_id", employee!.id)
-      .gte("to_date", addDays(today, -60))
-      .order("from_date", { ascending: false });
+    const [{ data }, { count }] = await Promise.all([
+      supabase
+        .from("wfh_requests")
+        .select("*")
+        .eq("employee_id", employee!.id)
+        .lte("from_date", `${year}-12-31`)
+        .gte("to_date", `${year}-01-01`)
+        .order("from_date", { ascending: false }),
+      supabase
+        .from("attendance")
+        .select("id", { count: "exact", head: true })
+        .eq("employee_id", employee!.id)
+        .eq("is_wfh", true)
+        .gte("work_date", `${year}-01-01`)
+        .lte("work_date", `${year}-12-31`),
+    ]);
     setRows((data as WfhRequest[]) ?? []);
-  }, [employee, today]);
+    setDaysWorked(count ?? 0);
+  }, [employee, year]);
 
   useEffect(() => {
     void load();
@@ -57,16 +81,28 @@ export function Wfh() {
         title="Work from home"
         subtitle={employee!.staff_type === "office" ? "On an approved day you can check in from anywhere" : "Request days you will work from home"}
         action={
-          <Button onClick={() => { setError(""); setFrom(today); setTo(today); setOpen(true); }}>
-            <Plus className="h-4 w-4" /> Request WFH
-          </Button>
+          <div className="flex gap-2">
+            {years.length > 1 && (
+              <select aria-label="Year" value={year} onChange={(e) => { setRows(null); setYear(e.target.value); }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+                {years.map((y) => <option key={y}>{y}</option>)}
+              </select>
+            )}
+            <Button onClick={() => { setError(""); setFrom(today); setTo(today); setOpen(true); }}>
+              <Plus className="h-4 w-4" /> Request WFH
+            </Button>
+          </div>
         }
       />
+      {daysWorked != null && (
+        <p className="mb-3 text-sm text-slate-600">
+          You worked from home on <b>{daysWorked}</b> day{daysWorked === 1 ? "" : "s"} in {year}.
+        </p>
+      )}
       <Card>
         {!rows ? (
           <Spinner />
         ) : rows.length === 0 ? (
-          <Empty>No work-from-home requests.</Empty>
+          <Empty>No work-from-home requests in {year}.</Empty>
         ) : (
           <ul className="divide-y divide-slate-100">
             {rows.map((r) => (

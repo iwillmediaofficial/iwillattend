@@ -1,10 +1,11 @@
 import type { Attendance, Employee, Holiday, LeaveRequest, Organization } from "./types";
 
 /** One cell of the monthly attendance sheet. */
-export type DayCode = "P" | "L" | "HD" | "SH" | "MC" | "LV" | "LOP" | "A" | "WO" | "H" | "-" | "";
+export type DayCode = "P" | "WH" | "L" | "HD" | "SH" | "MC" | "LV" | "LOP" | "A" | "WO" | "H" | "-" | "";
 
 export const DAY_CODES: { code: DayCode; label: string; cls: string }[] = [
   { code: "P", label: "Present", cls: "bg-success-50 text-success-700" },
+  { code: "WH", label: "Worked from home", cls: "bg-teal-50 text-teal-700" },
   { code: "L", label: "Late", cls: "bg-amber-50 text-amber-700" },
   { code: "HD", label: "Half day", cls: "bg-orange-50 text-orange-700" },
   { code: "SH", label: "Short hours", cls: "bg-fuchsia-50 text-fuchsia-700" },
@@ -16,12 +17,12 @@ export const DAY_CODES: { code: DayCode; label: string; cls: string }[] = [
   { code: "H", label: "Holiday", cls: "bg-sky-50 text-sky-700" },
 ];
 
-export const COUNT_CODES = ["P", "L", "HD", "SH", "MC", "LV", "LOP", "A", "WO", "H"] as const;
+export const COUNT_CODES = ["P", "WH", "L", "HD", "SH", "MC", "LV", "LOP", "A", "WO", "H"] as const;
 type CountCode = (typeof COUNT_CODES)[number];
 
 export type MusterEmployee = Pick<Employee, "id" | "full_name" | "emp_code" | "joined_on" | "exit_on"> &
   Partial<Pick<Employee, "weekly_off_mode" | "weekly_offs" | "flex_offs_per_week">>;
-export type MusterAttendance = Pick<Attendance, "employee_id" | "work_date" | "status" | "check_out_at" | "day_value" | "ot_minutes" | "ot_status">;
+export type MusterAttendance = Pick<Attendance, "employee_id" | "work_date" | "status" | "check_out_at" | "day_value" | "ot_minutes" | "ot_status"> & Partial<Pick<Attendance, "is_wfh">>;
 export type MusterRules = Pick<Organization, "weekly_offs" | "alt_saturday_offs" | "missing_checkout_as" | "sandwich_rule"> &
   Partial<Pick<Organization, "weekly_off_mode" | "flex_offs_per_week">>;
 
@@ -187,7 +188,8 @@ export function buildMuster(
           return "SH";
         }
         pay[i] = 1;
-        return a.status === "late" ? "L" : "P";
+        // An on-time day worked from home shows as WH; it is paid exactly like P.
+        return a.status === "late" ? "L" : a.is_wfh ? "WH" : "P";
       }
       if (leave) {
         if (!leave.leave_type?.is_paid) return "LOP";
@@ -232,7 +234,7 @@ export function buildMuster(
       }
     }
 
-    const counts = { P: 0, L: 0, HD: 0, SH: 0, MC: 0, LV: 0, LOP: 0, A: 0, WO: 0, H: 0 };
+    const counts = { P: 0, WH: 0, L: 0, HD: 0, SH: 0, MC: 0, LV: 0, LOP: 0, A: 0, WO: 0, H: 0 };
     for (const c of days) if (c !== "" && c !== "-") counts[c] += 1;
     return { employee, days, counts, unpaidOff, otMinutes, otPendingMinutes, payable: Math.round(pay.reduce((s, v) => s + v, 0) * 1000) / 1000 };
   });
