@@ -32,11 +32,16 @@ export function Leave() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  // Balances worked out in the database (monthly types are checked month by month).
+  const [left, setLeft] = useState<Map<string, number>>(new Map());
+
   const load = useCallback(async () => {
-    const [t, r] = await Promise.all([
+    const [t, r, b] = await Promise.all([
       supabase.from("leave_types").select("*").eq("is_active", true).order("name"),
       supabase.from("leave_requests").select("*, leave_type:leave_types(name, is_paid)").eq("employee_id", employee!.id).gte("from_date", `${year}-01-01`).lte("from_date", `${year}-12-31`).order("from_date", { ascending: false }),
+      supabase.rpc("my_leave_balances", { p_year: Number(year) }),
     ]);
+    setLeft(new Map(((b.data as { leave_type_id: string; left_now: number }[]) ?? []).map((x) => [x.leave_type_id, Number(x.left_now)])));
     setTypes((t.data as LeaveType[]) ?? []);
     setRows((r.data as unknown as LeaveRequest[]) ?? []);
   }, [employee, year]);
@@ -98,13 +103,20 @@ export function Leave() {
               <p className="truncate text-xs text-slate-500">{t.name}</p>
               {t.is_paid ? (
                 <p className="text-2xl font-semibold">
-                  {Number(t.annual_quota) - taken - pending}
-                  <span className="text-sm font-normal text-slate-400"> / {Number(t.annual_quota)}</span>
+                  {left.get(t.id) ?? Number(t.annual_quota) - taken - pending}
+                  <span className="text-sm font-normal text-slate-400">
+                    {t.allowance_period === "month"
+                      ? t.carry_forward ? " available" : " left this month"
+                      : ` / ${Number(t.annual_quota)}`}
+                  </span>
                 </p>
               ) : (
                 <p className="text-2xl font-semibold">{taken}<span className="text-sm font-normal text-slate-400"> taken</span></p>
               )}
-              <p className="text-xs text-slate-500">{t.is_paid ? `${taken} taken${pending ? ` · ${pending} pending` : ""}` : "Unpaid"}</p>
+              <p className="text-xs text-slate-500">
+                {t.is_paid && t.allowance_period === "month" ? `${Number(t.monthly_quota)} per month · ` : ""}
+                {t.is_paid ? `${taken} taken in ${year}${pending ? ` · ${pending} pending` : ""}` : "Unpaid"}
+              </p>
             </Card>
           );
         })}

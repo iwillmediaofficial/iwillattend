@@ -13,7 +13,14 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const hhmm = (t: string) => t.slice(0, 5);
 
 interface ShiftForm { id?: string; name: string; start_time: string; end_time: string; grace_minutes: string; half_day_under_hours: string; is_default: boolean; is_active: boolean }
-interface LeaveForm { id?: string; name: string; annual_quota: string; is_paid: boolean; is_active: boolean }
+interface LeaveForm { id?: string; name: string; annual_quota: string; is_paid: boolean; is_active: boolean; period: "year" | "month"; monthly_quota: string; carry_forward: boolean }
+
+/** "12 days per calendar year", "2 days per month (unused days carry over)". */
+function allowanceText(t: LeaveType): string {
+  if (!t.is_paid) return "No limit; deducted from pay";
+  if (t.allowance_period === "month") return `${Number(t.monthly_quota)} day${Number(t.monthly_quota) === 1 ? "" : "s"} per month${t.carry_forward ? " (unused days carry over within the year)" : " (unused days lapse at month end)"}`;
+  return `${Number(t.annual_quota)} days per calendar year`;
+}
 
 export function Settings() {
   const { org, employee, sub, refresh } = useAuth();
@@ -123,7 +130,16 @@ export function Settings() {
     if (!leaveForm) return;
     setBusy(true);
     setError("");
-    const payload = { name: leaveForm.name.trim(), annual_quota: Number(leaveForm.annual_quota), is_paid: leaveForm.is_paid, is_active: leaveForm.is_active };
+    const monthly = leaveForm.is_paid && leaveForm.period === "month";
+    const payload = {
+      name: leaveForm.name.trim(),
+      is_paid: leaveForm.is_paid,
+      is_active: leaveForm.is_active,
+      allowance_period: monthly ? "month" : "year",
+      annual_quota: monthly ? 0 : Number(leaveForm.annual_quota),
+      monthly_quota: monthly ? Number(leaveForm.monthly_quota) : 0,
+      carry_forward: monthly && leaveForm.carry_forward,
+    };
     const { error } = leaveForm.id
       ? await supabase.from("leave_types").update(payload).eq("id", leaveForm.id)
       : await supabase.from("leave_types").insert({ ...payload, org_id: org!.id });
@@ -348,7 +364,7 @@ export function Settings() {
       <Card>
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-semibold">Leave types</h2>
-          <Button variant="outline" onClick={() => { setError(""); setLeaveForm({ name: "", annual_quota: "12", is_paid: true, is_active: true }); }}>
+          <Button variant="outline" onClick={() => { setError(""); setLeaveForm({ name: "", annual_quota: "12", is_paid: true, is_active: true, period: "year", monthly_quota: "2", carry_forward: false }); }}>
             <Plus className="h-4 w-4" /> Add leave type
           </Button>
         </div>
@@ -359,9 +375,9 @@ export function Settings() {
                 <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
                   {t.name} {t.is_paid ? <Badge tone="green">Paid</Badge> : <Badge>Unpaid</Badge>} {!t.is_active && <Badge tone="red">Inactive</Badge>}
                 </p>
-                <p className="text-xs text-slate-500">{t.is_paid ? `${Number(t.annual_quota)} days per calendar year` : "No limit; deducted from pay"}</p>
+                <p className="text-xs text-slate-500">{allowanceText(t)}</p>
               </div>
-              <Button variant="ghost" aria-label={`Edit ${t.name}`} onClick={() => { setError(""); setLeaveForm({ id: t.id, name: t.name, annual_quota: String(Number(t.annual_quota)), is_paid: t.is_paid, is_active: t.is_active }); }}>
+              <Button variant="ghost" aria-label={`Edit ${t.name}`} onClick={() => { setError(""); setLeaveForm({ id: t.id, name: t.name, annual_quota: String(Number(t.annual_quota) || 12), is_paid: t.is_paid, is_active: t.is_active, period: t.allowance_period, monthly_quota: String(Number(t.monthly_quota) || 2), carry_forward: t.carry_forward }); }}>
                 <Pencil className="h-4 w-4" />
               </Button>
             </li>
@@ -400,7 +416,23 @@ export function Settings() {
               <input type="checkbox" checked={leaveForm.is_paid} onChange={(e) => setLeaveForm({ ...leaveForm, is_paid: e.target.checked })} /> Paid leave
             </label>
             {leaveForm.is_paid && (
-              <Input label="Days per calendar year" type="number" min={0} max={366} step="0.5" required value={leaveForm.annual_quota} onChange={(e) => setLeaveForm({ ...leaveForm, annual_quota: e.target.value })} />
+              <>
+                <Select label="Allowance" value={leaveForm.period} onChange={(e) => setLeaveForm({ ...leaveForm, period: e.target.value as "year" | "month" })}>
+                  <option value="year">Per year</option>
+                  <option value="month">Per month</option>
+                </Select>
+                {leaveForm.period === "year" ? (
+                  <Input label="Days per calendar year" type="number" min={0} max={366} step="0.5" required value={leaveForm.annual_quota} onChange={(e) => setLeaveForm({ ...leaveForm, annual_quota: e.target.value })} />
+                ) : (
+                  <>
+                    <Input label="Days per month" type="number" min={0.5} max={31} step="0.5" required value={leaveForm.monthly_quota} onChange={(e) => setLeaveForm({ ...leaveForm, monthly_quota: e.target.value })} hint="Half days are allowed, for example 1.5." />
+                    <label className="flex items-start gap-2 text-sm">
+                      <input type="checkbox" className="mt-0.5" checked={leaveForm.carry_forward} onChange={(e) => setLeaveForm({ ...leaveForm, carry_forward: e.target.checked })} />
+                      <span>Unused days carry over to next month<span className="block text-xs text-slate-500">{leaveForm.carry_forward ? "Unused days add up through the year and start fresh each January." : "Unused days are lost at the end of each month."}</span></span>
+                    </label>
+                  </>
+                )}
+              </>
             )}
             {leaveForm.id && (
               <label className="flex items-center gap-2 text-sm">

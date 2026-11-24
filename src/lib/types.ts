@@ -68,6 +68,11 @@ export interface LeaveType {
   annual_quota: number;
   is_paid: boolean;
   is_active: boolean;
+  /** year = annual_quota days a year; month = monthly_quota days each month. */
+  allowance_period: "year" | "month";
+  monthly_quota: number;
+  /** Monthly types: unused days add up over the year instead of lapsing at month end. */
+  carry_forward: boolean;
 }
 
 export type RequestStatus = "pending" | "approved" | "rejected" | "cancelled";

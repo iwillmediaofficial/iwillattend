@@ -18,7 +18,7 @@ interface Summary {
   emp_code: string | null;
   leave_days: number;
   unpaid_days: number;
-  by_type: { type: string; paid: boolean; days: number; quota: number | null; left: number | null }[];
+  by_type: { type: string; paid: boolean; period?: "year" | "month"; days: number; quota: number | null; left: number | null }[];
   wfh_days: number;
   pending_requests: number;
 }
@@ -222,7 +222,7 @@ export function LeaveHistory() {
                         <span className="flex flex-wrap gap-1">
                           {s.by_type.filter((t) => Number(t.days) > 0 || t.left != null).map((t) => (
                             <Badge key={t.type} tone={Number(t.days) > 0 ? "indigo" : "slate"}>
-                              {t.type}: {Number(t.days)}{t.left != null ? ` (${Number(t.left)} left)` : ""}
+                              {t.type}: {Number(t.days)}{t.left != null ? ` (${Number(t.left)} left${t.period === "month" ? " this month" : ""})` : ""}
                             </Badge>
                           ))}
                         </span>
@@ -236,7 +236,7 @@ export function LeaveHistory() {
             </div>
           )}
           <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
-            Leave taken counts approved leave inside the dates above. "Left" is the balance for the year of the end date. WFH days are days actually checked in on approved work from home.
+            Leave taken counts approved leave inside the dates above. "Left" is the balance for the year of the end date (for monthly leave types, for the month of the end date). WFH days are days actually checked in on approved work from home.
           </p>
         </Card>
       ) : (
