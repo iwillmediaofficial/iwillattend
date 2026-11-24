@@ -3,7 +3,7 @@ import { CheckCircle2, Clock, HardHat, LogIn, LogOut, MapPin, ScanFace } from "l
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 import type { Attendance, SiteAssignment } from "../lib/types";
-import { Badge, Button, Card, PageHeader, Spinner } from "../components/ui";
+import { AppLoader, Badge, Button, Card, PageHeader } from "../components/ui";
 import { CaptureFlow, type Capture } from "../components/CaptureFlow";
 import { SelfieThumb } from "../components/SelfieThumb";
 import { AttendanceStatus, FaceBadge } from "../components/badges";
@@ -79,7 +79,7 @@ export function Punch() {
     setMode(null);
   };
 
-  if (loading) return <Spinner />;
+  if (loading) return <AppLoader />;
 
   const isOffice = employee!.staff_type === "office";
   const done = !!row?.check_out_at;

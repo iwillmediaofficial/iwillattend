@@ -60,3 +60,44 @@ body {
   .print-area { position: fixed; left: 0; top: 0; width: 100%; padding: 24px; background: #fff; }
   .no-print { display: none !important; }
 }
+
+/*
+ * Loaders
+ *   .ld-scan  app start: a scan line moving over a face frame (also inlined in index.html)
+ *   .ld-ring  small teal/navy dual ring for buttons and cards (inherits colour inside buttons)
+ *   .ld-sk    skeleton rows that shimmer while a list loads
+ */
+@keyframes ld-scan { 0%, 100% { top: 14%; } 50% { top: 80%; } }
+@keyframes ld-spin { to { transform: rotate(360deg); } }
+@keyframes ld-shimmer { 0% { background-position: -320px 0; } 100% { background-position: 320px 0; } }
+@keyframes ld-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.ld-scan { position: relative; width: 64px; height: 64px; }
+.ld-scan-frame {
+  position: absolute; inset: 0; border: 3px solid #04837f; border-radius: 14px;
+  clip-path: polygon(0 0,30% 0,30% 30%,0 30%,0 70%,30% 70%,30% 100%,0 100%,0 0,100% 0,100% 100%,70% 100%,70% 70%,100% 70%,100% 30%,70% 30%,70% 0);
+}
+.ld-scan-face { position: absolute; inset: 0; display: grid; place-items: center; color: #0c2e52; }
+.ld-scan-line { position: absolute; left: 8%; right: 8%; height: 2px; border-radius: 2px; background: #33a101; animation: ld-scan 1.6s ease-in-out infinite; }
+
+.ld-ring { position: relative; display: inline-block; width: 1em; height: 1em; flex: none; }
+.ld-ring::before, .ld-ring::after { content: ""; position: absolute; border-radius: 9999px; border: 0.14em solid transparent; }
+.ld-ring::before { inset: 0; border-top-color: #04837f; border-right-color: #04837f; animation: ld-spin 0.9s linear infinite; }
+.ld-ring::after { inset: 0.2em; border-bottom-color: #0c2e52; border-left-color: #0c2e52; animation: ld-spin 1.2s linear infinite reverse; }
+/* On coloured buttons the ring takes the button's text colour so it stays visible. */
+.ld-ring.ld-current::before { border-top-color: currentColor; border-right-color: currentColor; }
+.ld-ring.ld-current::after { border-bottom-color: currentColor; border-left-color: currentColor; opacity: 0.6; }
+
+.ld-sk {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e2e8f0 0, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 640px 100%;
+  animation: ld-shimmer 1.3s linear infinite;
+}
+.ld-in { animation: ld-fade 0.25s ease-out both; }
+
+/* People who ask their phone for less motion get still loaders. */
+@media (prefers-reduced-motion: reduce) {
+  .ld-scan-line, .ld-ring::before, .ld-ring::after, .ld-sk { animation-duration: 3s; }
+  .ld-sk { animation: none; }
+}

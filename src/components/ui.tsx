@@ -1,4 +1,4 @@
-import { Loader2, X } from "lucide-react";
+import { UserRound, X } from "lucide-react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 
 const variants = {
@@ -22,7 +22,7 @@ export function Button({
       disabled={rest.disabled || loading}
       className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed ${variants[variant]} ${className}`}
     >
-      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+      {loading && <Ring onColor className="text-base" />}
       {children}
     </button>
   );
@@ -89,10 +89,45 @@ export function ErrorText({ children }: { children: ReactNode }) {
   return <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{children}</p>;
 }
 
-export function Spinner({ label }: { label?: string }) {
+/** C: small teal and navy dual ring, for buttons and cards. `onColor` uses the surrounding text colour. */
+export function Ring({ onColor, className = "" }: { onColor?: boolean; className?: string }) {
+  return <span role="status" aria-label="Loading" className={`ld-ring ${onColor ? "ld-current" : ""} ${className}`} />;
+}
+
+/** E: shimmering placeholder rows shaped like a list, shown while a list or card loads. */
+export function Spinner({ label, rows = 4 }: { label?: string; rows?: number }) {
+  if (label) {
+    return (
+      <div className="flex items-center justify-center gap-3 py-10 text-sm text-slate-500" role="status">
+        <Ring className="text-2xl" /> {label}
+      </div>
+    );
+  }
   return (
-    <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
-      <Loader2 className="h-5 w-5 animate-spin" /> {label ?? "Loading…"}
+    <div className="ld-in space-y-4 px-4 py-4" role="status" aria-label="Loading">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <div className="ld-sk h-9 w-9 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="ld-sk h-3" style={{ width: `${[70, 55, 62, 48][i % 4]}%` }} />
+            <div className="ld-sk h-2.5" style={{ width: `${[40, 32, 45, 28][i % 4]}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** A: face-scan loader for app start and full-page waits. */
+export function AppLoader({ text, full }: { text?: string; full?: boolean }) {
+  return (
+    <div className={`ld-in flex ${full ? "min-h-screen" : "min-h-[60vh]"} flex-col items-center justify-center gap-4`} role="status" aria-label={text ?? "Loading"}>
+      <div className="ld-scan">
+        <div className="ld-scan-frame" />
+        <div className="ld-scan-face"><UserRound className="h-8 w-8" strokeWidth={2} /></div>
+        <div className="ld-scan-line" />
+      </div>
+      {text && <p className="text-sm text-slate-500">{text}</p>}
     </div>
   );
 }

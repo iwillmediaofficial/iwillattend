@@ -6,7 +6,7 @@ import "./index.css";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { captureInstallPrompt } from "./lib/install";
 import { Layout } from "./components/Layout";
-import { Spinner } from "./components/ui";
+import { AppLoader } from "./components/ui";
 import { ForgotPassword, Login, Onboarding, Signup } from "./pages/AuthPages";
 import { Punch } from "./pages/Punch";
 import { History } from "./pages/History";
@@ -45,7 +45,7 @@ function App() {
   if (pathname === "/privacy") return <Privacy />;
   if (pathname === "/terms") return <Terms />;
 
-  if (loading) return <Spinner />;
+  if (loading) return <AppLoader full />;
 
   if (!session) {
     return (
